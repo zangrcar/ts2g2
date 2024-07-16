@@ -9,7 +9,7 @@ import math
 
 
 class EdgeWeightingStrategy:
-    def weight(self, G, x1, x2, y1, y2):
+    def weight (self, G, x1, x2, y1, y2):
         return None
 
 
@@ -311,3 +311,6 @@ class EdgeAdditionStrategyUnweighted(EdgeAdditionStrategy):
 class EdgeAdditionStrategyWeighted(EdgeAdditionStrategy):
     def add_edge(self, G, x1, x2, weight=None):
         G.add_edge(x1, x2, weight=weight)
+
+
+

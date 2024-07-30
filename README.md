@@ -41,71 +41,51 @@ The package is a joint effort between the [Jožef Stefan Institute](https://www.
   <tr>
     <td class="tg-7btt">1</td>
     <td class="tg-0pky">Natural Visibility Graph</td>
-    <td class="tg-0pky">
-        X
-    </td>
-    <td class="tg-0pky">
-      <!-- directed -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- weighted -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: penetration -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: angle -->
-      X
-    </td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
   </tr>
   <tr>
     <td class="tg-7btt">2</td>
     <td class="tg-0pky">Horizontal Visibility Graph</td>
-    <td class="tg-0pky">
-      X
-    </td>
-    <td class="tg-0pky">
-        <!-- directed -->
-        X
-    </td>
-    <td class="tg-0pky">
-      <!-- weighted -->
-      X 
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: penetration -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: angle -->
-      X
-    </td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
   </tr>
   <tr>
     <td class="tg-7btt">3</td>
     <td class="tg-0pky">Difference Visibility Graph</td>
-    <td class="tg-0pky">
-        <!-- undirected -->
-    </td>
-    <td class="tg-0pky">
-      <!-- directed -->
-    </td>
-    <td class="tg-0pky">
-      <!-- weighted -->
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: penetration -->
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: angle -->
-    </td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+  </tr>
+  <tr>
+    <td class="tg-7btt">4</td>
+    <td class="tg-0pky">Quantile Graph</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+  </tr>
+
+  <tr>
+    <td class="tg-7btt">5</td>
+    <td class="tg-0pky">Ordinal Partition Graph</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
   </tr>
 </tbody>
 </table>
-
 
 #### References table
 
@@ -191,6 +171,49 @@ The package is a joint effort between the [Jožef Stefan Institute](https://www.
     </td>
     <td class="tg-0pky">
       <!-- constraints:references: angle -->
+    </td>
+  </tr>
+<tr>
+    <td class="tg-7btt">4</td>
+    <td class="tg-0pky">Quantile Graph</td>
+    <td class="tg-0pky">
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- directed -->
+      <a href="https://www.researchgate.net/figure/Illustrative-example-of-the-quantile-graph-algorithm-for-Q-4-On-the-left-panel-we_fig8_349721222">ref</a>
+    </td>
+    <td class="tg-0pky">
+      <!-- weighted -->
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: penetration -->
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: angle -->
+    </a>
+    </td>
+  </tr><tr>
+    <td class="tg-7btt">5</td>
+    <td class="tg-0pky">Ordinal Partition Graph</td>
+    <td class="tg-0pky">
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- directed -->
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- weighted -->
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: penetration -->
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: angle -->
+    </a>
     </td>
   </tr>
 </tbody>

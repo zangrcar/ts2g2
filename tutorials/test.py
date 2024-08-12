@@ -20,22 +20,22 @@ import xml.etree.ElementTree as ET
 import random
 import hashlib
 
-import csv_read
-import xml_read
-import graph_strategy
+import csv_read as cr
+import xml_read as xr
+import graph_strategy as gs
 import graph
+import ts_process_strategy as tps
+import ts_to_graph as ttg
 import link
-import ts_process_strategy
-import ts_to_graph
-
 
 amazon_path = os.path.join(os.getcwd(), "amazon", "AMZN.csv")
 apple_path = os.path.join(os.getcwd(), "apple", "APPLE.csv")
 
-ts_to_graph.TimeSeriesToGraph()\
-    .from_csv(csv_read.CsvStock(amazon_path, "Close"))\
-    .process(ts_process_strategy.Segment(60, 90))\
-    .to_graph(graph_strategy.NaturalVisibility().with_limit(1))\
+
+ttg.TimeSeriesToGraph()\
+    .from_csv(cr.CsvStock(amazon_path, "Close"))\
+    .process(tps.Segment(60, 90))\
+    .to_graph(gs.NaturalVisibility().with_limit(1))\
     .add_edge(0,2)\
     .add_edge(13, 21, weight = 17)\
     .link(link.Link().by_value(link.SameValue(2)).seasonalities(15))\
@@ -44,37 +44,37 @@ ts_to_graph.TimeSeriesToGraph()\
 
 #--------------------------------------------------------------------------------
 
-ts_to_graph.TimeSeriesToGraph()\
-    .from_csv(csv_read.CsvStock(apple_path, "Close"))\
-    .process(ts_process_strategy.Segment(60, 120))\
-    .process(ts_process_strategy.SlidingWindow(5))\
-    .to_graph(graph_strategy.NaturalVisibility())\
+ttg.TimeSeriesToGraph()\
+    .from_csv(cr.CsvStock(apple_path, "Close"))\
+    .process(tps.Segment(60, 120))\
+    .process(tps.SlidingWindow(5))\
+    .to_graph(gs.NaturalVisibility())\
     .combine_identical_nodes()\
     .draw("red")
 
 #--------------------------------------------------------------------------------
 
 
-a = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(amazon_path, "Close"))\
-    .process(ts_process_strategy.Segment(60, 80))\
-    .to_graph(graph_strategy.NaturalVisibility())\
+a = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(amazon_path, "Close"))\
+    .process(tps.Segment(60, 80))\
+    .to_graph(gs.NaturalVisibility())\
     .link(link.Link().by_value(link.SameValue(1)))
 
-b = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(apple_path, "Close"))\
-    .process(ts_process_strategy.Segment(120, 140))\
-    .to_graph(graph_strategy.NaturalVisibility().with_limit(1))
+b = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(apple_path, "Close"))\
+    .process(tps.Segment(120, 140))\
+    .to_graph(gs.NaturalVisibility().with_limit(1))
 
-c = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(amazon_path, "Close"))\
-    .process(ts_process_strategy.Segment(180, 200))\
-    .to_graph(graph_strategy.NaturalVisibility().with_angle(120))\
+c = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(amazon_path, "Close"))\
+    .process(tps.Segment(180, 200))\
+    .to_graph(gs.NaturalVisibility().with_angle(120))\
     .combine_identical_nodes()
 
-d = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(apple_path, "Close"))\
-    .process(ts_process_strategy.Segment(240, 260))\
-    .to_graph(graph_strategy.NaturalVisibility())\
+d = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(apple_path, "Close"))\
+    .process(tps.Segment(240, 260))\
+    .to_graph(gs.NaturalVisibility())\
     .link(link.Link().seasonalities(15))
 
-i = ts_to_graph.MultivariateTimeSeriesToGraph()\
+i = ttg.MultivariateTimeSeriesToGraph()\
     .add(a)\
     .add(b)\
     .add(c)\
@@ -86,36 +86,36 @@ i = ts_to_graph.MultivariateTimeSeriesToGraph()\
 
 #-------------------------------------------------------------------------------
 
-x = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(amazon_path, "Close"))\
-    .process(ts_process_strategy.Segment(60, 90))\
-    .process(ts_process_strategy.SlidingWindow(5))\
-    .to_graph(graph_strategy.NaturalVisibility())\
+x = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(amazon_path, "Close"))\
+    .process(tps.Segment(60, 90))\
+    .process(tps.SlidingWindow(5))\
+    .to_graph(gs.NaturalVisibility())\
     .combine_identical_nodes()
 
 
-y = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(apple_path, "Close"))\
-    .process(ts_process_strategy.Segment(120, 150))\
-    .process(ts_process_strategy.SlidingWindow(5))\
-    .to_graph(graph_strategy.NaturalVisibility())\
+y = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(apple_path, "Close"))\
+    .process(tps.Segment(120, 150))\
+    .process(tps.SlidingWindow(5))\
+    .to_graph(gs.NaturalVisibility())\
     .combine_identical_nodes()
 
-z = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(amazon_path, "Close"))\
-    .process(ts_process_strategy.Segment(180, 210))\
-    .process(ts_process_strategy.SlidingWindow(5))\
-    .to_graph(graph_strategy.NaturalVisibility())
+z = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(amazon_path, "Close"))\
+    .process(tps.Segment(180, 210))\
+    .process(tps.SlidingWindow(5))\
+    .to_graph(gs.NaturalVisibility())
 
-w = ts_to_graph.TimeSeriesToGraph().from_csv(csv_read.CsvStock(apple_path, "Close"))\
-    .process(ts_process_strategy.Segment(240, 270))\
-    .process(ts_process_strategy.SlidingWindow(5))\
-    .to_graph(graph_strategy.NaturalVisibility())\
+w = ttg.TimeSeriesToGraph().from_csv(cr.CsvStock(apple_path, "Close"))\
+    .process(tps.Segment(240, 270))\
+    .process(tps.SlidingWindow(5))\
+    .to_graph(gs.NaturalVisibility())\
     .combine_identical_nodes()
 
-j = ts_to_graph.MultivariateTimeSeriesToGraph()\
+j = ttg.MultivariateTimeSeriesToGraph()\
     .add(x)\
     .add(y)\
     .add(z)\
     .add(w)\
-    .link(link.Link(multi=True).time_coocurence())\
+    .link(link.LinkMulti().time_coocurence())\
     .combine_identical_nodes()\
     .draw("red")
 

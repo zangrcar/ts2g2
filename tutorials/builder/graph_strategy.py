@@ -8,22 +8,16 @@ class Strategy:
         self.visibility = []
         self.graph_type = "undirected"
         self.edge_weighting_strategy = EdgeWeightingStrategyNull()
-        self.str_name = None
 
     def with_angle(self, angle):
         """Sets an angle in which range must a node be to be considered for connection."""
         self.visibility.append(TimeseriesEdgeVisibilityConstraintsVisibilityAngle(angle))
-        self.str_name += (f" with angle({angle})")
         return self
 
     def with_limit(self, limit):
         """Sets a limit as to how many data instances two nodes must be apart to be considered for connection."""
         pass
     
-    def strategy_name(self):
-        """Returns name of used strategy."""
-        return self.str_name
-
     def get_strategy(self):
         """Returns strategy."""
         return TimeseriesToGraphStrategy(
@@ -37,11 +31,9 @@ class NaturalVisibility(Strategy):
     def __init__(self):
         super().__init__()
         self.visibility = [TimeseriesEdgeVisibilityConstraintsNatural()]
-        self.str_name = "Natural visibility strategy"
     
     def with_limit(self, limit):
         self.visibility[0] = TimeseriesEdgeVisibilityConstraintsNatural(limit)
-        self.str_name += (f" with limit({limit})")
         return self
     
 class HorizontalVisibility(Strategy):
@@ -49,9 +41,7 @@ class HorizontalVisibility(Strategy):
     def __init__(self):
         super().__init__()
         self.visibility = [TimeseriesEdgeVisibilityConstraintsHorizontal()]
-        self.str_name = "Horizontal visibility strategy"
     
     def with_limit(self, limit):
         self.visibility[0] = TimeseriesEdgeVisibilityConstraintsHorizontal(limit)
-        self.str_name += (f" with limit({limit})")
         return self

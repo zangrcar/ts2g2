@@ -17,7 +17,9 @@ class Segment(TSprocess):
     
     def process(self, time_series):
         """returns a TimeSeriesToGraph object, that has a wanted segment of original time serie"""
-        return ts_to_graph.TimeSeriesToGraph(time_series[self.segment_start:self.segment_end])
+        g = ts_to_graph.TimeSeriesToGraph(time_series[self.segment_start:self.segment_end])
+        g.set_base(time_series)
+        return g
 
 class SlidingWindow(TSprocess):
 
@@ -36,5 +38,7 @@ class SlidingWindow(TSprocess):
         for i in range(len(segments)):
             new_series.append(ts_to_graph.TimeSeriesToGraph(segments[i]))
         
-        return ts_to_graph.TimeSeriesToGraph(new_series, True)
+        g = ts_to_graph.TimeSeriesToGraphSlidWin(new_series, segments = segments)
+        g.set_base(time_series)
+        return g
 

@@ -155,7 +155,11 @@ class LinkMulti(LinkMaster):
 
         return self.graph
 
-class SameValue:
+
+class Value:
+    def __init__(self):
+        pass
+class SameValue(Value):
     "Class that notes that we want to connect nodes based on similarity of values."
     def __init__(self, allowed_difference):
         self.allowed_difference = allowed_difference

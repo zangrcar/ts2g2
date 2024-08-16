@@ -1,5 +1,144 @@
 import networkx as nx
+import singular as sg
 
+class LinkGraphs:
+    def __init__(self):
+        self.graphs = None
+        self.graph = None
+        self.coocurrence = False
+        self.graph_order = None
+        self.slid_win = False
+
+    def link_time_coocurrence(self):
+        """Connects graphs in a multivariate graph based on time co-ocurrence."""
+        g = nx.Graph()
+
+        min_size = None
+        
+        for graph in self.graphs.values():
+            if min_size == None or len(graph.nodes) < min_size:
+                min_size = len(graph.nodes)
+
+        for hash, graph in self.graphs.items():
+            nx.set_node_attributes(graph, hash, 'id')
+            i = 0
+            for node in list(graph.nodes(data = True)):
+                node[1]['order'] = i
+                i += 1
+        
+        for graph in self.graphs.values():
+            g = nx.compose(g, graph)
+
+        i = 0
+        j = 0
+        for (node_11, node_12) in zip(list(g.nodes(data = True)), list(g.nodes)):
+            
+            i = 0
+            for (node_21, node_22) in zip(list(g.nodes(data = True)), list(g.nodes)):
+                if i == j:
+                    i+=1
+                    continue
+
+                if node_11[1]['order'] == node_21[1]['order']:
+                    g.add_edge(node_12, node_22, intergraph_binding = 'positional')
+                i+=1
+            j+=1
+        
+        self.graph = g
+        return
+
+    def time_coocurence(self):
+        """Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance."""
+        self.coocurrence = True
+        return self
+
+    def sliding_window(self):
+        self.slid_win = True
+        return self
+
+    def link_slid_win(self):
+        g = nx.Graph()
+
+        for i in range(len(self.graph_order)-1):
+            g.add_edge(self.graphs[self.graph_order[i]], self.graphs[self.graph_order[i+1]])
+        
+        self.graph = g
+        
+        return
+
+    def link(self, graphs, graph_order):
+        self.graphs = graphs
+        self.graph_order = graph_order
+
+        if self.coocurrence:
+            self.link_time_coocurrence()
+        
+        if self.slid_win:
+            self.link_slid_win()
+        return self.graph
+
+class LinkOne:
+    def __init__(self):
+        self.graph = None
+        self.period = 0
+        self.seasonalites = False
+        self.same_timestep = -1
+    
+    def link(self, graph):
+        self.graph = graph.get_graph()
+        if self.seasonalites:
+            self.link_seasonalities()
+
+        if self.same_timestep > 0:
+            self.link_same_timesteps()
+        
+        return self.graph
+
+    def link_seasonalities(self):
+        """Links nodes that are self.period instances apart."""
+        for i in range(len(self.graph.nodes) - self.period):
+            self.graph.add_edge(list(self.graph.nodes)[i], list(self.graph.nodes)[i+self.period], intergraph_binding='seasonality')
+        
+        return
+    
+    def seasonalities(self, period):
+        """Notes that we want to connect based on seasonalities, ad sets the period parameter."""
+        self.seasonalites = True
+        self.period = period
+        return self
+    
+    def by_value(self, strategy):
+        """Notes that we want to connect nodes based on values and strategy."""
+        if isinstance(strategy, SameValue):
+            self.same_timestep = strategy.get_all_diff()
+        return self
+    
+    def link_same_timesteps(self, same_timestep):
+        """Links nodes whose values are at most sels.same_timestep apart."""
+        for node_11, node_12 in zip(self.graph.nodes(data=True), self.graph.nodes):
+            for node_21, node_22 in zip(self.graph.nodes(data=True), self.graph.nodes):
+                if  abs(node_11[1][self.attribute][0] - node_21[1][self.attribute][0]) < same_timestep and node_12 != node_22:
+                    self.graph.add_edge(node_12, node_22, intergraph_binding = 'timesteps')
+        
+        return
+    
+class Value:
+    def __init__(self):
+        pass
+
+class SameValue(Value):
+    "Class that notes that we want to connect nodes based on similarity of values."
+    def __init__(self, allowed_difference):
+        self.allowed_difference = allowed_difference
+    
+    def get_all_diff(self):
+        return self.allowed_difference
+
+
+
+
+
+"""
 class LinkMaster:
     def __init__(self, graph = None, att = 'value'):
         self.seasonalites = False
@@ -10,18 +149,18 @@ class LinkMaster:
         self.attribute = att
     
     def seasonalities(self, period):
-        """Notes that we want to connect based on seasonalities, ad sets the period parameter."""
+        #Notes that we want to connect based on seasonalities, ad sets the period parameter.
         self.seasonalites = True
         self.period = period
         return self
     
     def link_seasonalities(self):
-        """Links nodes that are self.period instances apart."""
+        #Links nodes that are self.period instances apart.
         for i in range(len(self.graph.nodes) - self.period):
             self.graph.add_edge(list(self.graph.nodes)[i], list(self.graph.nodes)[i+self.period], intergraph_binding='seasonality')
     
     def time_coocurence(self):
-        """Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance."""
+        #Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance.
         self.coocurrence = True
         return self
     
@@ -37,13 +176,13 @@ class Link(LinkMaster):
         super().__init__()
  
     def by_value(self, strategy):
-        """Notes that we want to connect nodes based on values and strategy."""
+        #Notes that we want to connect nodes based on values and strategy.
         if isinstance(strategy, SameValue):
             self.same_timestep = strategy.get_all_diff()
         return self
 
     def link_positional(self, graph):
-        """Connects graphs in a multivariate graph based on time co-ocurrance."""
+        #Connects graphs in a multivariate graph based on time co-ocurrance.
         g = nx.Graph()
 
         min_size = None
@@ -80,14 +219,14 @@ class Link(LinkMaster):
         self.graph = g
 
     def link_same_timesteps(self):
-        """Links nodes whose values are at most sels.same_timestep apart."""
+        #Links nodes whose values are at most sels.same_timestep apart.
         for node_11, node_12 in zip(self.graph.nodes(data=True), self.graph.nodes):
             for node_21, node_22 in zip(self.graph.nodes(data=True), self.graph.nodes):
                 if  abs(node_11[1][self.attribute][0] - node_21[1][self.attribute][0]) < self.same_timestep and node_12 != node_22:
                     self.graph.add_edge(node_12, node_22, intergraph_binding = 'timesteps')
 
     def link(self, graph):
-        """Calls functions to link nodes based on what we set before."""
+        #Calls functions to link nodes based on what we set before.
         self.graph = graph
 
         if self.seasonalites:
@@ -107,7 +246,7 @@ class LinkMulti(LinkMaster):
         super().__init__()
     
     def link_positional(self, graph):
-        """Connects graphs in a multivariate graph based on time co-ocurrance."""
+        #Connects graphs in a multivariate graph based on time co-ocurrance.
         g = nx.MultiGraph()
 
         min_size = None
@@ -144,7 +283,7 @@ class LinkMulti(LinkMaster):
         self.graph = g
 
     def link(self, graph):
-        """Calls functions to link nodes based on what we set before."""
+        #Calls functions to link nodes based on what we set before.
         self.graph = graph
 
         if self.seasonalites:
@@ -166,3 +305,4 @@ class SameValue(Value):
     
     def get_all_diff(self):
         return self.allowed_difference
+"""

@@ -26,10 +26,13 @@ import graph
 import ts_process_strategy as tps
 import ts_to_graph as ttg
 import link
+import time_series_view as tsv
+import singular as sg
 
 amazon_path = os.path.join(os.getcwd(), "amazon", "AMZN.csv")
 apple_path = os.path.join(os.getcwd(), "apple", "APPLE.csv")
 
+"""
 ttg.TimeSeriesToGraph()\
     .from_csv(inp.CsvStock(amazon_path, "Close"))\
     .process(tps.Segment(60, 90))\
@@ -115,7 +118,7 @@ j = ttg.MultivariateTimeSeriesToGraph()\
     .add(w)\
     .link(link.LinkMulti().time_coocurence())\
     .combine_identical_nodes()\
-    .draw(["red", "blue", "black", "orange"])
+    .draw("red")
 
 #------------------------------------------------------------------------------------
 
@@ -189,5 +192,63 @@ spo = ttg.MultivariateTimeSeriesToGraph()\
     .add(n)\
     .link(link.Link().time_coocurence())\
     .draw(color = ["grey", "silver", "black"])
+"""
 """Change the draw function back after taking the photo"""
-    
+"""
+source = tsv.TimeSeriesSource()\
+    .from_csv(inp.CsvStock(apple_path, "Close"))
+
+view = tsv.TimeSeriesView(source)\
+    .process(tps.Segment(60, 90))\
+    .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
+    .draw("blue")
+
+source.from_csv(inp.CsvStock(amazon_path, "Close"))
+"""
+
+test = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .segmentation(60, 90).process()\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+         .segmentation(90, 120).process())\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+         .segmentation(150, 180).process())\
+    .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
+    .link(link.LinkGraphs().time_coocurence())\
+    .link(link.LinkOne().seasonalities(15))\
+    .draw("blue")
+
+new_test = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .segmentation(60, 150).sliding_window(5).process()\
+    .to_graph(gs.NaturalVisibility().get_strategy())\
+    .link(link.LinkGraphs().sliding_window())\
+    .combine_identical_nodes_slid_win()\
+    .draw("red")
+
+mixed_test = graph.Graph(test.get_graph())\
+    .set_nodes(test.get_graphs())\
+    .walk_through_all()\
+    .choose_next_node("weighted")\
+    .choose_next_value("sequential")\
+    .skip_every_x_steps(1)\
+    .ts_length(100)\
+    .to_multiple_time_sequences()\
+    .draw()
+
+
+graph.GraphSlidWin(new_test.get_graph())\
+    .set_nodes(new_test.get_graph().nodes)\
+    .choose_next_node("weighted")\
+    .choose_next_value("random")\
+    .skip_every_x_steps(1)\
+    .ts_length(50)\
+    .to_time_sequence()\
+    .draw()
+
+test = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .segmentation(60, 90).process()\
+    .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
+    .link(link.LinkOne().seasonalities(15))\
+    .draw("blue")
+
+
+

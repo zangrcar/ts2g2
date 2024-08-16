@@ -1,5 +1,6 @@
 import pandas as pd
 import xml.etree.ElementTree as ET
+import singular as sg
 
 class CsvRead:
     """Superclass of all classes for extraxtion of data from csv files.""" 
@@ -20,7 +21,8 @@ class CsvStock(CsvRead):
         time_series["Date"] = pd.to_datetime(time_series["Date"])
         time_series.set_index("Date", inplace=True)
         time_series = time_series[self.y_column]
-        return time_series
+        ts = sg.TimeSeries(time_series)
+        return ts
 
 class XmlRead:
     """Superclass of all classes for extraxtion of data from xml files."""
@@ -56,4 +58,5 @@ class XmlSomething(XmlRead):
         for element in elements:
             column.append(float(element.text))
         
-        return column
+        ts = sg.TimeSeries(column)
+        return ts

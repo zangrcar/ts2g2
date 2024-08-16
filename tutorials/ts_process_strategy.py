@@ -1,4 +1,5 @@
 import ts_to_graph
+import time_series_view as tsv
 
 
 class TSprocess:
@@ -15,9 +16,10 @@ class Segment(TSprocess):
         self.segment_start = segment_start
         self.segment_end = segment_end
     
-    def process(self, time_series):
+    def process(self, source, time_series):
         """returns a TimeSeriesToGraph object, that has a wanted segment of original time serie"""
-        g = ts_to_graph.TimeSeriesToGraph(time_series[self.segment_start:self.segment_end])
+        #g = ts_to_graph.TimeSeriesToGraph(time_series[self.segment_start:self.segment_end])
+        g = tsv.TimeSeriesView(source, time_series[self.segment_start:self.segment_end])
         g.set_base(time_series)
         return g
 

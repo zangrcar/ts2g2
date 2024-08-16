@@ -166,6 +166,14 @@ class Graph(GraphMaster):
         self.data_nodes = data_nodes
         return self
 
+    def set_nodes(self, dict: dict):
+        self.nodes = []
+        self.data_nodes = []
+        for graph in dict.values():
+            self.nodes.append(list(graph.nodes))
+            self.data_nodes.append(list(graph.nodes(data=True)))
+        return self
+
     def to_time_sequence(self):
         self.nodes = [list(self.nodes)]
         self.data_nodes = [list(self.data_nodes)]

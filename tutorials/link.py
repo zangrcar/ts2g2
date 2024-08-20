@@ -1,19 +1,73 @@
 import networkx as nx
 import singular as sg
+import hashlib
 
 class LinkGraphs:
     def __init__(self):
         self.graphs = None
         self.graph = None
-        self.coocurrence = False
         self.graph_order = None
-        self.slid_win = False
+        self.command_array = []
 
-    def link_time_coocurrence(self):
+    def time_coocurence(self):
+        """Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance."""
+        self.command_array.append(LinkTimeCoocurence(self.graphs))
+        return self
+
+    def sliding_window(self):
+        self.command_array.append(LinkSlidingWindow(self.graphs, self.graph_order))
+        return self
+
+    def succession(self, strategy):
+        return strategy.get_num()
+
+    def link(self, graphs, graph_order):
+        self.graphs = graphs
+        self.graph_order = graph_order
+
+        self.command_array.sort(key=self.succession)
+
+        for strat in self.command_array:
+            strat.set_graphs(self.graphs, graph_order)
+            self.graph, self.graphs = strat.apply()
+        
+        return self.graph
+
+
+class GraphsLinkingstrategy:
+    def __init__(self, graphs, num):
+        self.graphs = graphs
+        self.graph = None
+        self.num = num
+    
+    def get_num(self):
+        return self.num
+
+    def set_graphs(self, graphs, order):
+        pass
+
+    def apply(self):
+        pass
+
+class LinkTimeCoocurence(GraphsLinkingstrategy):
+    def __init__(self, graphs):
+        super().__init__(graphs, 1)
+    
+    def set_graphs(self, graphs, order):
+        self.graphs = graphs
+        return self
+
+    def apply(self):
         """Connects graphs in a multivariate graph based on time co-ocurrence."""
         g = nx.Graph()
 
         min_size = None
+
+        if isinstance(self.graphs, list):
+            graphs = {}
+            for i in range(len(self.graphs)):
+                graphs[list(self.graphs[i].items())[0]] = list(self.graphs[i].values())[0]
+            self.graphs = graphs
         
         for graph in self.graphs.values():
             if min_size == None or len(graph.nodes) < min_size:
@@ -45,97 +99,135 @@ class LinkGraphs:
             j+=1
         
         self.graph = g
-        return
 
-    def time_coocurence(self):
-        """Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance."""
-        self.coocurrence = True
+        return self.graph, self.graphs
+
+class LinkSlidingWindow(GraphsLinkingstrategy):
+    def __init__(self, graphs, graph_order):
+        super().__init__(graphs, 0)
+        self.graph_order = graph_order
+    
+    def set_graphs(self, graphs, order):
+        self.graphs = graphs
+        self.graph_order = order
         return self
 
-    def sliding_window(self):
-        self.slid_win = True
-        return self
-
-    def link_slid_win(self):
+    def apply(self):
         g = nx.Graph()
+        graphs = {}
 
-        for i in range(len(self.graph_order)-1):
-            g.add_edge(self.graphs[self.graph_order[i]], self.graphs[self.graph_order[i+1]])
+        for j in range(len(self.graphs)):
+            h = nx.Graph()
+
+            for i in range(len(self.graph_order[j])-1):
+                g.add_edge(self.graphs[j][self.graph_order[j][i]], self.graphs[j][self.graph_order[j][i+1]])
+                h.add_edge(self.graphs[j][self.graph_order[j][i]], self.graphs[j][self.graph_order[j][i+1]])
+            graphs[hash(h)] = h
         
         self.graph = g
-        
-        return
-
-    def link(self, graphs, graph_order):
         self.graphs = graphs
-        self.graph_order = graph_order
-
-        if self.coocurrence:
-            self.link_time_coocurrence()
         
-        if self.slid_win:
-            self.link_slid_win()
-        return self.graph
+        return self.graph, self.graphs
 
-class LinkOne:
-    def __init__(self):
-        self.graph = None
-        self.period = 0
-        self.seasonalites = False
-        self.same_timestep = -1
+
+
+def hash(graph):
+        """Returns unique hash of this graph."""
+        str_to_hash = str(graph.nodes()) + str(graph.edges())
+        return hashlib.md5(str_to_hash.encode()).hexdigest()
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class GraphLinkingstrategy:
+    def __init__(self, graph, num):
+        self.graph = graph
+        self.num = num
     
-    def link(self, graph):
-        self.graph = graph.get_graph()
-        if self.seasonalites:
-            self.link_seasonalities()
+    def set_graph(self, graph):
+        self.graph = graph
 
-        if self.same_timestep > 0:
-            self.link_same_timesteps()
-        
-        return self.graph
+    def get_num(self):
+        return self.num
 
-    def link_seasonalities(self):
-        """Links nodes that are self.period instances apart."""
+    def apply(self):
+        pass
+
+class LinkSeasonalities(GraphLinkingstrategy):
+    def __init__(self, period):
+        super().__init__(None, 0)
+        self.period = period
+    
+    def apply(self):
         for i in range(len(self.graph.nodes) - self.period):
             self.graph.add_edge(list(self.graph.nodes)[i], list(self.graph.nodes)[i+self.period], intergraph_binding='seasonality')
-        
-        return
-    
-    def seasonalities(self, period):
-        """Notes that we want to connect based on seasonalities, ad sets the period parameter."""
-        self.seasonalites = True
-        self.period = period
-        return self
-    
-    def by_value(self, strategy):
-        """Notes that we want to connect nodes based on values and strategy."""
-        if isinstance(strategy, SameValue):
-            self.same_timestep = strategy.get_all_diff()
-        return self
-    
-    def link_same_timesteps(self, same_timestep):
-        """Links nodes whose values are at most sels.same_timestep apart."""
-        for node_11, node_12 in zip(self.graph.nodes(data=True), self.graph.nodes):
-            for node_21, node_22 in zip(self.graph.nodes(data=True), self.graph.nodes):
-                if  abs(node_11[1][self.attribute][0] - node_21[1][self.attribute][0]) < same_timestep and node_12 != node_22:
-                    self.graph.add_edge(node_12, node_22, intergraph_binding = 'timesteps')
-        
-        return
-    
-class Value:
-    def __init__(self):
+        return self.graph
+
+
+class Value(GraphLinkingstrategy):
+    def __init__(self, graph):
+        super().__init__(graph, 1)
+        self.attribute = 'value'
+
+    def apply(self):
         pass
 
 class SameValue(Value):
     "Class that notes that we want to connect nodes based on similarity of values."
     def __init__(self, allowed_difference):
+        super().__init__(None)
         self.allowed_difference = allowed_difference
     
-    def get_all_diff(self):
-        return self.allowed_difference
+    def apply(self):
+        for node_11, node_12 in zip(self.graph.nodes(data=True), self.graph.nodes):
+            for node_21, node_22 in zip(self.graph.nodes(data=True), self.graph.nodes):
+                if  abs(node_11[1][self.attribute][0] - node_21[1][self.attribute][0]) < self.allowed_difference and node_12 != node_22:
+                    self.graph.add_edge(node_12, node_22, intergraph_binding = 'timesteps')
+        
+        return self.graph
 
 
+class LinkNodesWithinGraph:
+    def __init__(self):
+        self.graph = None
+        self.attribute = 'value'
+        self.command_array = []
+    
+    def link(self, graph):
+        self.graph = graph.get_graph()
+        
+        self.command_array.sort(key=self.succession)
 
+        for strat in self.command_array:
+            strat.set_graph(self.graph)
+            self.graph = strat.apply()
+        
+        return self.graph
+    
+    def succession(self, strategy):
+        return strategy.get_num()
+
+    def seasonalities(self, period):
+        """Notes that we want to connect based on seasonalities, ad sets the period parameter."""
+        self.command_array.append(LinkSeasonalities(period))
+        return self
+    
+    def by_value(self, strategy):
+        """Notes that we want to connect nodes based on values and strategy."""
+        self.command_array.append(strategy)
+        return self
+    
 
 
 """

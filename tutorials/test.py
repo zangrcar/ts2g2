@@ -122,7 +122,7 @@ j = ttg.MultivariateTimeSeriesToGraph()\
 
 #------------------------------------------------------------------------------------
 
-graph.Graph(a.return_graph())\
+graph.GraphToTS(a.return_graph())\
     .set_nodes(i.return_graph().nodes, i.return_graph().nodes(data=True))\
     .walk_through_all()\
     .choose_next_node("weighted")\
@@ -145,7 +145,7 @@ graph.GraphSlidWin(x.return_graph())\
 
 #---------------------------------------------------------------------------------
 
-graph.Graph(i.return_graph())\
+graph.GraphToTS(i.return_graph())\
     .set_nodes(i.get_graph_nodes(), i.get_graph_nodes_data())\
     .walk_through_all()\
     .change_graphs_every_x_steps(2)\
@@ -206,25 +206,61 @@ view = tsv.TimeSeriesView(source)\
 source.from_csv(inp.CsvStock(amazon_path, "Close"))
 """
 
-test = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-    .segmentation(60, 90).process()\
-    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-         .segmentation(90, 120).process())\
-    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-         .segmentation(150, 180).process())\
+test = sg.TimeSeriesPreprocessing(inp.CsvStock(amazon_path, "Close").from_csv())\
+    .add_strategy(sg.Segmentation(60, 90))\
+    .process()\
     .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
-    .link(link.LinkGraphs().time_coocurence())\
-    .link(link.LinkOne().seasonalities(15))\
+    .add_edge(0,2)\
+    .add_edge(13, 21, weight = 17)\
+    .link(link.LinkNodesWithinGraph().by_value(link.SameValue(2)).seasonalities(15))\
     .draw("blue")
 
-new_test = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-    .segmentation(60, 150).sliding_window(5).process()\
+
+i = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .add_strategy(sg.Segmentation(60, 90))\
+    .process()\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+        .add_strategy(sg.Segmentation(90, 120))\
+        .process())\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+        .add_strategy(sg.Segmentation(150, 180))\
+        .process())\
+    .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
+    .link(link.LinkGraphs().time_coocurence())\
+    .link(link.LinkNodesWithinGraph().by_value(link.SameValue(0.5)))\
+    .draw("blue")
+
+
+
+sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .add_strategy(sg.Segmentation(60, 90))\
+    .add_strategy(sg.SlidingWindow(5))\
+    .process()\
     .to_graph(gs.NaturalVisibility().get_strategy())\
     .link(link.LinkGraphs().sliding_window())\
+    .link(link.LinkNodesWithinGraph().seasonalities(15))\
     .combine_identical_nodes_slid_win()\
+    .draw("green")
+
+sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .add_strategy(sg.Segmentation(60, 90))\
+    .add_strategy(sg.SlidingWindow(5))\
+    .process()\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+         .add_strategy(sg.Segmentation(90, 120))\
+            .add_strategy(sg.SlidingWindow(5))\
+                .process())\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+         .add_strategy(sg.Segmentation(150, 180))\
+            .add_strategy(sg.SlidingWindow(5))\
+                .process())\
+    .to_graph(gs.NaturalVisibility().get_strategy())\
+    .link(link.LinkGraphs().sliding_window().time_coocurence())\
+    .link(link.LinkNodesWithinGraph().seasonalities(15))\
     .draw("red")
 
-mixed_test = graph.Graph(test.get_graph())\
+
+graph.GraphToTS(test.get_graph())\
     .set_nodes(test.get_graphs())\
     .walk_through_all()\
     .choose_next_node("weighted")\
@@ -235,8 +271,30 @@ mixed_test = graph.Graph(test.get_graph())\
     .draw()
 
 
-graph.GraphSlidWin(new_test.get_graph())\
-    .set_nodes(new_test.get_graph().nodes)\
+graph.GraphToTS(i.get_graph())\
+    .set_nodes(i.get_graphs())\
+    .walk_through_all()\
+    .change_graphs_every_x_steps(2)\
+    .choose_next_node("random")\
+    .choose_next_value("sequential")\
+    .skip_every_x_steps(1)\
+    .ts_length(50)\
+    .to_multiple_time_sequences()\
+    .draw()
+
+
+x = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .add_strategy(sg.Segmentation(60, 120))\
+    .add_strategy(sg.SlidingWindow(5))\
+    .process()\
+    .to_graph(gs.NaturalVisibility().get_strategy())\
+    .link(link.LinkGraphs().sliding_window())\
+    .combine_identical_nodes_slid_win()\
+    .draw("red")
+
+
+graph.GraphSlidWin(x.get_graph())\
+    .set_nodes(x.get_graphs())\
     .choose_next_node("weighted")\
     .choose_next_value("random")\
     .skip_every_x_steps(1)\
@@ -244,11 +302,31 @@ graph.GraphSlidWin(new_test.get_graph())\
     .to_time_sequence()\
     .draw()
 
-test = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-    .segmentation(60, 90).process()\
-    .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
-    .link(link.LinkOne().seasonalities(15))\
+
+j = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+    .add_strategy(sg.Segmentation(60, 110))\
+    .add_strategy(sg.SlidingWindow(5))\
+    .process()\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+         .add_strategy(sg.Segmentation(90, 140))\
+            .add_strategy(sg.SlidingWindow(5))\
+                .process())\
+    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
+         .add_strategy(sg.Segmentation(150, 200))\
+            .add_strategy(sg.SlidingWindow(5))\
+                .process())\
+    .to_graph(gs.NaturalVisibility().get_strategy())\
+    .link(link.LinkGraphs().sliding_window().time_coocurence())\
+    .combine_identical_nodes_slid_win()\
+    .link(link.LinkNodesWithinGraph().seasonalities(15))\
     .draw("blue")
 
 
-
+graph.GraphSlidWin(j.get_graph())\
+    .set_nodes(j.get_graphs())\
+    .choose_next_node("random")\
+    .choose_next_value("sequential")\
+    .skip_every_x_steps(0)\
+    .ts_length(100)\
+    .to_multiple_time_sequences()\
+    .draw()

@@ -23,6 +23,9 @@ class GraphMaster:
         """Sets parameters to be used if we have multivariate graph and need nodes from specific original graph."""
         pass
     
+    def set_nodes(self, dict: dict):
+        pass
+
     def set_attribute(self, att):
         self.att = att
 
@@ -96,22 +99,41 @@ class GraphSlidWin(GraphMaster):
     def __init__(self, graph):
         super().__init__(graph, "slid_win")
     
+    """
     def set_nodes(self, nodes):
         self.nodes = nodes
         return self
+        """
+    
+    def set_nodes(self, dicts: dict):
+
+        if isinstance(dicts, list):
+            graphs = [{} for _ in range(len(dicts))]
+            for i in range(len(dicts)):
+                for j in range(len(dicts[i].values())):
+                    graphs[i][list(dicts[i].items())[j]] = list(dicts[i].values())[j]
+            dicts = graphs
+
+        self.nodes = [[] for _ in range(len(dicts))]
+
+        for i in range(len(dicts)):
+            for graph in dicts[i].values():
+                self.nodes[i].append(graph)
+        return self
 
     def to_time_sequence(self):
-        self.nodes = [list(self.nodes)]
+        #self.nodes = [list(self.nodes)]
         return self.to_multiple_time_sequences()
 
+
     def to_multiple_time_sequences(self):
-    
+
         self.sequences = [[] for _ in range(len(self.nodes))]
 
         current_nodes = [None for _ in range(len(self.nodes))]
 
         for i in range(len(self.nodes)):
-            current_nodes[i] = self.nodes[i][0]
+            current_nodes[i] = list(self.nodes[i])[0]
         
         dictionaries = [{} for _ in range(len(self.nodes))]
         for i in range(len(self.nodes)):
@@ -119,17 +141,14 @@ class GraphSlidWin(GraphMaster):
                 dictionaries[i][j] = 0
 
         
-        strategy = None
-
         strategy = ChooseStrategySlidWin(self.walk, self.next_node_strategy, self.next_value_strategy, self.graph, self.nodes, dictionaries, self.att)
 
         i = 0
         while len(self.sequences[0]) < self.time_series_len:
-            
             for j in range(len(self.sequences)):
 
                 index = 0
-                for i in range(len(list(self.nodes[j]))):
+                for i in range(len(self.nodes[j])):
                     if(self.is_equal(current_nodes[j], list(self.graph.nodes)[i])):
                         index = i
                         break
@@ -138,14 +157,14 @@ class GraphSlidWin(GraphMaster):
                 if self.sequences[j][-1] == None:
                     return self
                 
-
             for j in range(self.skip_values + 1):
                 for k in range(len(current_nodes)):
-                    
+
                     current_nodes[k] = strategy.next_node(i, k, current_nodes, self.switch_graphs)
 
                     if(current_nodes[k] == None):
                         return self
+                    
             
             """
             for k in range(len(current_nodes)):
@@ -156,7 +175,7 @@ class GraphSlidWin(GraphMaster):
             i += 1
         return self
 
-class Graph(GraphMaster):
+class GraphToTS(GraphMaster):
     """Class that turns ordinary graphs back to time series."""
     def __init__(self, graph):
         super().__init__(graph, "classic")
@@ -167,6 +186,13 @@ class Graph(GraphMaster):
         return self
 
     def set_nodes(self, dict: dict):
+        
+        if isinstance(dict, list):
+            graphs = {}
+            for i in range(len(dict)):
+                graphs[list(dict[i].items())[0]] = list(dict[i].values())[0]
+            dict = graphs
+
         self.nodes = []
         self.data_nodes = []
         for graph in dict.values():
@@ -257,13 +283,13 @@ class ChooseStrategyMaster:
         """From neighbors of the previous node randomly chooses next node."""
         neighbors = set(self.graph.neighbors(node))
         neighbors = list(set(self.nodes[graph_index]) & neighbors)
+        
         return random.choice(neighbors)
 
     def next_node_one_weighted(self, graph_index, node):
         """From neighbors of the previous node chooses next one based on number of connections between them."""
         neighbors = set(self.graph.neighbors(node))
         neighbors = list(set(self.nodes[graph_index]) & neighbors)
-
 
         weights = []
         total = 0

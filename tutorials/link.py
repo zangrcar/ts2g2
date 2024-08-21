@@ -8,7 +8,7 @@ class LinkGraphs:
         self.graph_order = None
         self.command_array = []
 
-    def time_coocurence(self):
+    def time_cooccurrence(self):
         """Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance."""
         self.command_array.append(LinkTimeCoocurence(self.graphs))
         return self

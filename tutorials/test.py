@@ -27,7 +27,7 @@ import singular as sg
 amazon_path = os.path.join(os.getcwd(), "amazon", "AMZN.csv")
 apple_path = os.path.join(os.getcwd(), "apple", "APPLE.csv")
 
-"""
+
 test = sg.TimeSeriesPreprocessing(inp.CsvStock(amazon_path, "Close").from_csv())\
     .add_strategy(sg.Segmentation(60, 90))\
     .process()\
@@ -36,7 +36,7 @@ test = sg.TimeSeriesPreprocessing(inp.CsvStock(amazon_path, "Close").from_csv())
     .add_edge(13, 21, weight = 17)\
     .link(link.LinkNodesWithinGraph().by_value(link.SameValue(2)).seasonalities(15))\
     .draw("blue")
-"""
+
 
 i = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
     .add_strategy(sg.Segmentation(60, 90))\
@@ -48,26 +48,12 @@ i = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
         .add_strategy(sg.Segmentation(150, 180))\
         .process())\
     .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
-    .link(link.LinkGraphs().time_coocurence())\
+    .link(link.LinkGraphs().time_cooccurrence())\
     .link(link.LinkNodesWithinGraph().by_value(link.SameValue(0.5)))\
     .combine_identical_nodes()\
     .draw("blue")
 
-sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-    .add_strategy(sg.Segmentation(60, 90))\
-    .process()\
-    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-        .add_strategy(sg.Segmentation(90, 120))\
-        .process())\
-    .add(sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
-        .add_strategy(sg.Segmentation(150, 180))\
-        .process())\
-    .to_graph(gs.NaturalVisibility().with_limit(1).get_strategy())\
-    .link(link.LinkGraphs().time_coocurence())\
-    .link(link.LinkNodesWithinGraph().by_value(link.SameValue(0.5)))\
-    .draw("blue")
 
-"""
 sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
     .add_strategy(sg.Segmentation(60, 90))\
     .add_strategy(sg.SlidingWindow(5))\
@@ -92,7 +78,7 @@ sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
             .add_strategy(sg.SlidingWindow(5))\
                 .process())\
     .to_graph(gs.NaturalVisibility().get_strategy())\
-    .link(link.LinkGraphs().sliding_window().time_coocurence())\
+    .link(link.LinkGraphs().sliding_window().time_cooccurrence())\
     .link(link.LinkNodesWithinGraph().seasonalities(15))\
     .draw("red")
 
@@ -147,7 +133,7 @@ j = sg.TimeSeriesPreprocessing(inp.CsvStock(apple_path, "Close").from_csv())\
             .add_strategy(sg.SlidingWindow(5))\
                 .process())\
     .to_graph(gs.NaturalVisibility().get_strategy())\
-    .link(link.LinkGraphs().sliding_window().time_coocurence())\
+    .link(link.LinkGraphs().sliding_window().time_cooccurrence())\
     .combine_identical_nodes_slid_win()\
     .link(link.LinkNodesWithinGraph().seasonalities(15))\
     .draw("blue")
@@ -160,4 +146,3 @@ graph.GraphSlidWin(j.get_graph())\
     .ts_length(100)\
     .to_multiple_time_sequences()\
     .draw()
-"""

@@ -2,16 +2,209 @@ import matplotlib.pyplot as plt
 import random
 
 
+class NextValue:
+    def __init__(self):
+        self.skip = 0
+        self.att = 'value'
+        self.dictionaries = None
+
+    def append(self, sequence, graph, graph_index, index):
+        pass
+
+    def skip_every_x_steps(self, x):
+        self.skip = x
+        return self
+
+    def get_skip(self):
+        return self.skip
+
+    def set_arguments(self, dictionary, att):
+        self.dictionaries = dictionary
+        self.att = att
+
+    def get_name(self):
+        pass
+
+class NextValueRandom(NextValue):
+    def __init__(self):
+        super().__init__()
+        
+    def append(self, sequence, graph, graph_index, index):
+        index = random.randint(0, len(graph[1][self.att]) - 1)
+        sequence.append(graph[1][self.att][index])
+        return sequence
+
+    def get_name(self):
+        return "random"
+
+class NextValueRandomSlidWin(NextValue):
+    def __init__(self):
+        super().__init__()
+
+    def append(self, sequence, graph, graph_index, index):
+        nodes = list(graph.nodes(data = True))
+        random.shuffle(nodes)
+
+        for node in nodes:
+            index = random.randint(0, len(node[1][self.att]) - 1)
+            sequence.append(node[1][self.att][index])
+        return sequence
+
+    def get_name(self):
+        return "random"
+
+class NextValueSequential(NextValue):
+    def __init__(self):
+        super().__init__()
+
+    def append(self, sequence, graph, graph_index, index):
+        if int(self.dictionaries[graph_index][index]/2) >= len(list(graph[1][self.att])):
+            self.dictionaries[graph_index][index] = 0
+        
+        ind = int(self.dictionaries[graph_index][index]/2)
+        sequence.append(graph[1][self.att][ind])
+        self.dictionaries[graph_index][index] += 1
+        return sequence
+
+    def get_name(self):
+        return "sequential"
+
+class NextValueSequentialSlidWin(NextValue):
+    def __init__(self):
+        super().__init__()
+
+    def append(self, sequence, graph, graph_index, index):
+        if int(self.dictionaries[graph_index][index]/2) >= len(list(list(graph.nodes(data=True))[0][1][self.att])):
+            self.dictionaries[graph_index][index] = 0
+    
+        ind = int(self.dictionaries[graph_index][index]/2)
+
+        for node in graph.nodes(data=True):
+            sequence.append(node[1][self.att][ind])
+    
+        self.dictionaries[graph_index][index] += 1
+        return sequence
+
+
+    def get_name(self):
+        return "sequential"
+
+
+class NextNode:
+    def __init__(self):
+        self.change_graphs = 1
+        self.graph = None
+        self.nodes = None
+        self.dictionaries = None
+        self.att = 'value'
+
+    def next_node(self, i, graph_index, nodes, switch, node):
+        pass
+
+    def change_graphs_every_x_steps(self, x):
+        self.change_graphs = x
+        return self
+    
+    def get_change(self):
+        return self.change_graphs
+
+    def set_arguments(self, graph, nodes, dictionaries, att):
+        self.graph = graph
+        self.nodes = nodes
+        self.dictionaries = dictionaries
+        self.att = att
+    
+    def get_name(self):
+        pass
+
+class NextNodeAllRandom(NextNode):
+    def __init__(self):
+        super().__init__()
+
+    def next_node(self, i, graph_index, nodes, switch, node):
+        """From neighbors of the previous node randomly chooses next node."""
+        index = int((i/switch) % len(nodes))
+        neighbors = set(self.graph.neighbors(nodes[index]))
+        
+        neighbors = list(set(self.nodes[graph_index]) & neighbors)
+        return random.choice(neighbors)
+
+    def get_name(self):
+        return "walkthrough all graphs randomly"
+
+class NextNodeOneRandom(NextNode):
+    def __init__(self):
+        super().__init__()
+
+    def next_node(self, i, graph_index, nodes, switch, node):
+        """From neighbors of the previous node randomly chooses next node."""
+        neighbors = set(self.graph.neighbors(node))
+        neighbors = list(set(self.nodes[graph_index]) & neighbors)
+        
+        return random.choice(neighbors)
+
+    def get_name(self):
+        return "walkthrough one graph randomly"
+
+class NextNodeAllWeighted(NextNode):
+    def __init__(self):
+        super().__init__()
+
+    def next_node(self, i, graph_index, nodes, switch, node):
+        """From neighbors of the previous node chooses next one based on number of connections between them."""
+        index = int((i/switch) % len(nodes))
+        neighbors = set(self.graph.neighbors(nodes[index]))
+        neighbors = list(set(self.nodes[graph_index]) & neighbors)
+        
+        weights = []
+        total = 0
+
+        for neighbor in neighbors:
+            num = self.graph.number_of_edges(nodes[index], neighbor)
+            weights.append(num)
+            total += num
+        
+        for element in weights:
+            element /= total
+        
+        return random.choices(neighbors, weights=weights, k=1)[0]
+
+    def get_name(self):
+        return "walkthrough all graphs weighted"
+
+class NextNodeOneWeighted(NextNode):
+    def __init__(self):
+        super().__init__()
+
+    def next_node(self, i, graph_index, nodes, switch, node):
+        """From neighbors of the previous node chooses next one based on number of connections between them."""
+        neighbors = set(self.graph.neighbors(node))
+        neighbors = list(set(self.nodes[graph_index]) & neighbors)
+
+        weights = []
+        total = 0
+        for neighbor in neighbors:
+            num = self.graph.number_of_edges(node, neighbor)
+            weights.append(num)
+            total += num
+        for element in weights:
+            element /= total
+        
+        return random.choices(neighbors, weights=weights, k=1)[0]
+
+    def get_name(self):
+        return "walkthrough one graph weighted"
+
+
 class GraphMaster:
     """Superclass of classes GraphSlidWin and Graph"""
     def __init__(self, graph, strategy):
         self.graph = graph
-        self.next_node_strategy = "random"
-        self.next_value_strategy = "random"
+        self.node_strategy = None
+        self.value_strategy = None
         self.skip_values = 0
         self.time_series_len = 100
         self.sequences = None
-        self.walk = "one"
         self.switch_graphs = 1
         self.colors = None
         self.nodes = None
@@ -29,26 +222,16 @@ class GraphMaster:
     def set_attribute(self, att):
         self.att = att
 
-    """Next 6 function set the parameters, that are later on used as a strategy for converting graph to time series."""
+    """Next 4 function set the parameters, that are later on used as a strategy for converting graph to time series."""
     """--->"""
-    def walk_through_all(self):
-        self.walk = "all"
+    def next_node_strategy(self, strategy: NextNode):
+        self.node_strategy = strategy
+        self.switch_graphs = strategy.get_change()
         return self
     
-    def change_graphs_every_x_steps(self, x):
-        self.switch_graphs = x
-        return self
-    
-    def choose_next_node(self, strategy):
-        self.next_node_strategy = strategy
-        return self
-    
-    def choose_next_value(self, strategy):
-        self.next_value_strategy = strategy
-        return self
-    
-    def skip_every_x_steps(self, x):
-        self.skip_values = x
+    def next_value_strategy(self, strategy: NextValue):
+        self.value_strategy = strategy
+        self.skip_values = strategy.get_skip()
         return self
     
     def ts_length(self, x):
@@ -91,19 +274,13 @@ class GraphMaster:
                 self.colors.append("black")
         
         for j in range(len(self.sequences)):
-            self.plot_timeseries(self.sequences[j], f"walk = {self.walk}, next_node_strategy = {self.next_node_strategy}, next_value = {self.next_value_strategy}", "Date", "Value", self.colors[j])
+            self.plot_timeseries(self.sequences[j], f"next_node_strategy = {self.node_strategy.get_name()}, next_value = {self.value_strategy.get_name()}", "Date", "Value", self.colors[j])
         plt.show()
 
 class GraphSlidWin(GraphMaster):
     """Class that converts graphs made using sliding window mechanism back to time series"""
     def __init__(self, graph):
         super().__init__(graph, "slid_win")
-    
-    """
-    def set_nodes(self, nodes):
-        self.nodes = nodes
-        return self
-        """
     
     def set_nodes(self, dicts: dict):
 
@@ -122,9 +299,7 @@ class GraphSlidWin(GraphMaster):
         return self
 
     def to_time_sequence(self):
-        #self.nodes = [list(self.nodes)]
         return self.to_multiple_time_sequences()
-
 
     def to_multiple_time_sequences(self):
 
@@ -140,8 +315,10 @@ class GraphSlidWin(GraphMaster):
             for j in range(len(list(self.nodes[i]))):
                 dictionaries[i][j] = 0
 
-        
-        strategy = ChooseStrategySlidWin(self.walk, self.next_node_strategy, self.next_value_strategy, self.graph, self.nodes, dictionaries, self.att)
+
+        self.value_strategy.set_arguments(dictionaries, self.att)
+        self.node_strategy.set_arguments(self.graph, self.nodes, dictionaries, self.att)
+
 
         i = 0
         while len(self.sequences[0]) < self.time_series_len:
@@ -153,25 +330,18 @@ class GraphSlidWin(GraphMaster):
                         index = i
                         break
 
-                self.sequences[j] = strategy.append(self.sequences[j], current_nodes[j], j, index)
+                self.sequences[j] = self.value_strategy.append(self.sequences[j], current_nodes[j], j, index)
                 if self.sequences[j][-1] == None:
                     return self
                 
             for j in range(self.skip_values + 1):
                 for k in range(len(current_nodes)):
 
-                    current_nodes[k] = strategy.next_node(i, k, current_nodes, self.switch_graphs)
+                    current_nodes[k] = self.node_strategy.next_node(i, k, current_nodes, self.switch_graphs, current_nodes[0])
 
                     if(current_nodes[k] == None):
                         return self
                     
-            
-            """
-            for k in range(len(current_nodes)):
-                    current_nodes[k] = strategy.next_node(i, k, current_nodes, self.switch_graphs)
-                    if(current_nodes[k] == None):
-                        break
-            """
             i += 1
         return self
 
@@ -220,8 +390,9 @@ class GraphToTS(GraphMaster):
         for i in range(len(self.nodes)):
             for j in range(len(list(self.nodes[i]))):
                 dictionaries[i][j] = 0
-
-        strategy = ChooseStrategy(self.walk, self.next_node_strategy, self.next_value_strategy, self.graph, self.nodes, dictionaries, self.att)
+            
+        self.value_strategy.set_arguments(dictionaries, self.att)
+        self.node_strategy.set_arguments(self.graph, self.nodes, dictionaries, self.att)
 
         i = 0
         while len(self.sequences[0]) < self.time_series_len:
@@ -235,13 +406,13 @@ class GraphToTS(GraphMaster):
                         index = i
                         break
                 
-                self.sequences[j] = strategy.append(self.sequences[j], current_nodes_data[j], j, index)
+                self.sequences[j] = self.value_strategy.append(self.sequences[j], current_nodes_data[j], j, index)
                 if self.sequences[j][-1] == None:
                     return
 
             for j in range(self.skip_values+1):
                 for k in range(len(current_nodes)):
-                    current_nodes[k] = strategy.next_node(i, k, current_nodes, self.switch_graphs)
+                    current_nodes[k] = self.node_strategy.next_node(i, k, current_nodes, self.switch_graphs, current_nodes[0])
 
                     new_index = self.nodes[k].index(current_nodes[k])
                     current_nodes_data[k] = self.data_nodes[k][new_index]
@@ -250,162 +421,3 @@ class GraphToTS(GraphMaster):
             
             i += 1
         return self
-
-class ChooseStrategyMaster:
-    def __init__(self, walk, next_node_strategy, value, graph, nodes, dictionaries, att):
-        self.next_node_strategy = next_node_strategy
-        self.walk = walk
-        self.value = value
-        self.graph = graph
-        self.nodes = nodes
-        self.dictionaries = dictionaries
-        self.att = att
-    
-    def append_random(self, sequence, graph):
-        """To a sequence appends a random value of a node it is currently on."""
-        pass
-
-    def append_lowInd(self, sequence, graph, graph_index, index):
-        """To a sequence appends a successive value of a node it is currently on."""
-        pass
-
-    def append(self, sequence, graph, graph_index, index):
-        if(self.value) == "random":
-            return self.append_random(sequence, graph)
-        elif self.value == "sequential" :
-           return self.append_lowInd(sequence, graph, graph_index, index)
-        else:
-            print("you chose non-existent method of value selection")
-            print("please choose between: random, sequential")
-            return None
-    
-    def next_node_one_random(self, graph_index, node):
-        """From neighbors of the previous node randomly chooses next node."""
-        neighbors = set(self.graph.neighbors(node))
-        neighbors = list(set(self.nodes[graph_index]) & neighbors)
-        
-        return random.choice(neighbors)
-
-    def next_node_one_weighted(self, graph_index, node):
-        """From neighbors of the previous node chooses next one based on number of connections between them."""
-        neighbors = set(self.graph.neighbors(node))
-        neighbors = list(set(self.nodes[graph_index]) & neighbors)
-
-        weights = []
-        total = 0
-        for neighbor in neighbors:
-            num = self.graph.number_of_edges(node, neighbor)
-            weights.append(num)
-            total += num
-        for element in weights:
-            element /= total
-        
-        return random.choices(neighbors, weights=weights, k=1)[0]
-
-    def next_node_one(self, graph_index, node):
-        """If we have multivariate graph this function walks on first ones and 
-        for others graphs chooses next node based on neighbors of the node in first graph."""
-        if self.next_node_strategy == "random":
-            return self.next_node_one_random(graph_index, node)
-        elif  self.next_node_strategy == "weighted":
-            return self.next_node_one_weighted(graph_index, node)
-        else:
-            print("you chose non-existent next_node_strategy.")
-            print("please choose between: random, weighted")
-            return None
-    
-    def next_node_all_random(self, i, graph_index, nodes, switch):
-        """From neighbors of the previous node randomly chooses next node."""
-        index = int((i/switch) % len(nodes))
-        neighbors = set(self.graph.neighbors(nodes[index]))
-        
-        neighbors = list(set(self.nodes[graph_index]) & neighbors)
-        return random.choice(neighbors)
-    
-    def next_node_all_weighted(self, i, graph_index, nodes, switch):
-        """From neighbors of the previous node chooses next one based on number of connections between them."""
-        index = int((i/switch) % len(nodes))
-        neighbors = set(self.graph.neighbors(nodes[index]))
-        neighbors = list(set(self.nodes[graph_index]) & neighbors)
-        
-        weights = []
-        total = 0
-
-        for neighbor in neighbors:
-            num = self.graph.number_of_edges(nodes[index], neighbor)
-            weights.append(num)
-            total += num
-        
-        for element in weights:
-            element /= total
-        
-        return random.choices(neighbors, weights=weights, k=1)[0]
-    
-    def next_node_all(self, i, graph_index, nodes, switch):
-        """If we have multivariate graph this function walks on all graphs and switches between them every 'switch' steps and
-        for others graphs chooses next node based on neighbors of the node in cuurent graph."""
-        if self.next_node_strategy == "random":
-            return self.next_node_all_random(i, graph_index, nodes, switch)
-        elif  self.next_node_strategy == "weighted":
-            return self.next_node_all_weighted(i, graph_index, nodes, switch)
-        else:
-            print("you chose non-existent next_node_strategy.")
-            print("please choose between: random, weighted")
-            return None
-    
-    def next_node(self, i, graph_index, nodes, switch):
-        if self.walk == "one":
-            return self.next_node_one(graph_index, nodes[0])
-        elif self.walk == "all":
-            return self.next_node_all(i, graph_index, nodes, switch)
-        else:
-            print("you chose non-existent walk")
-            print("please choose between: one, all")
-            return None
-    
-class ChooseStrategy(ChooseStrategyMaster):
-    """Subclass that alters few methods to fit normal graph."""
-    def __init__(self, walk, next_node_strategy, value, graph, nodes, dictionaries, att):
-        super().__init__(walk, next_node_strategy, value, graph, nodes, dictionaries, att)
-    
-    def append_random(self, sequence, graph):
-        index = random.randint(0, len(graph[1][self.att]) - 1)
-        sequence.append(graph[1][self.att][index])
-        return sequence
-    
-    def append_lowInd(self, sequence, graph, graph_index, index):
-        if int(self.dictionaries[graph_index][index]/2) >= len(list(graph[1][self.att])):
-            self.dictionaries[graph_index][index] = 0
-        
-        ind = int(self.dictionaries[graph_index][index]/2)
-        sequence.append(graph[1][self.att][ind])
-        self.dictionaries[graph_index][index] += 1
-        return sequence
-
-class ChooseStrategySlidWin(ChooseStrategyMaster):
-    """Subclass that alters few methods to fit graph made using sliding window mechanism."""
-    def __init__(self, walk, next_node_strategy, value, graph, nodes, dictionaries, att):
-        super().__init__(walk, next_node_strategy, value, graph, nodes, dictionaries, att)
-    
-    def append_random(self, sequence, graph):
-
-        nodes = list(graph.nodes(data = True))
-        random.shuffle(nodes)
-
-        for node in nodes:
-            index = random.randint(0, len(node[1][self.att]) - 1)
-            sequence.append(node[1][self.att][index])
-        return sequence
-
-    def append_lowInd(self, sequence, graph, graph_index, index):
-        
-        if int(self.dictionaries[graph_index][index]/2) >= len(list(list(graph.nodes(data=True))[0][1][self.att])):
-            self.dictionaries[graph_index][index] = 0
-    
-        ind = int(self.dictionaries[graph_index][index]/2)
-
-        for node in graph.nodes(data=True):
-            sequence.append(node[1][self.att][ind])
-    
-        self.dictionaries[graph_index][index] += 1
-        return sequence

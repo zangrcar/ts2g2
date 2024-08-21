@@ -130,7 +130,9 @@ class TimeSeriesView:
         """Returns unique hash of this graph."""
         str_to_hash = str(graph.nodes()) + str(graph.edges())
         return hashlib.md5(str_to_hash.encode()).hexdigest()
-            
+
+
+
 class Graph:
     def __init__(self, graph, graphs = None):
         self.graph = graph

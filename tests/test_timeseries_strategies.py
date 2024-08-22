@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import Mock
 
-from core import model
-from core.model import TimeseriesGraph, TimeseriesArrayStream
+from core import model_previous
+from core.model_previous import TimeseriesArrayStream
+from core.model_previous import TimeseriesGraph
 from timeseries.strategies import TimeseriesToGraphStrategy
 
 class TestToGraphMethod(unittest.TestCase):
@@ -17,7 +18,7 @@ class TestToGraphMethod(unittest.TestCase):
 
         # Call the to_graph method with the mock timeseries stream
 
-        stream = model.TimeseriesArrayStream([1, 2, 3, 4, 5])
+        stream = model_previous.TimeseriesArrayStream([1, 2, 3, 4, 5])
 
 
         result_graph = self.strategy_instance.to_graph(stream)
@@ -40,7 +41,7 @@ class TestToGraphMethod(unittest.TestCase):
         # Set up the test
         self.strategy_instance = TimeseriesToGraphStrategy([MockVisibilityConstraint()])
 
-        stream = model.TimeseriesArrayStream([])
+        stream = model_previous.TimeseriesArrayStream([])
 
         result_graph = self.strategy_instance.to_graph(stream)
         print(result_graph.graph)
@@ -74,7 +75,7 @@ class TestToGraphMethod(unittest.TestCase):
 
         # Call the to_graph method with the mock timeseries stream
 
-        stream = model.TimeseriesArrayStream([1, 2, 3, 4, 5])
+        stream = model_previous.TimeseriesArrayStream([1, 2, 3, 4, 5])
 
         result_graph = self.strategy_instance.to_graph(stream)
 

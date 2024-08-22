@@ -1,7 +1,7 @@
 """
 Time series graphs
 """
-from core.model import TimeseriesGraph
+from core.model_previous import TimeseriesGraph
 import networkx as nx
 import itertools
 import math

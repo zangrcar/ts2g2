@@ -1,6 +1,6 @@
 import pandas as pd
 import xml.etree.ElementTree as ET
-import singular as sg
+import core.model as sg
 
 class CsvRead:
     """Superclass of all classes for extraxtion of data from csv files.""" 

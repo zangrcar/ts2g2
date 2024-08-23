@@ -1,8 +1,7 @@
 import random
 
-
-class NextValue:
-    """Master class for choosing next value, when transforming graph back to time series."""
+class StrategyNextValueInNode:
+    """Stores strategy to chose next value in the selected node."""
     def __init__(self):
         self.skip = 0
         self.att = 'value'
@@ -26,8 +25,8 @@ class NextValue:
         pass
 
 
-class NextValueRandom(NextValue):
-    """Chooses next value randomly."""
+class StrategyNextValueInNodeRandom(StrategyNextValueInNode):
+    """Chooses next value in selected node randomly."""
     def __init__(self):
         super().__init__()
 
@@ -40,8 +39,8 @@ class NextValueRandom(NextValue):
         return "random"
 
 
-class NextValueRandomSlidWin(NextValue):
-    """Chooses next value randomly for graph made with sliding window mechanism."""
+class StrategyNextValueInNodeRandomForSlidingWindow(StrategyNextValueInNode):
+    """Chooses next value in selected node randomly in graph made with sliding window mechanism."""
     def __init__(self):
         super().__init__()
 
@@ -58,8 +57,8 @@ class NextValueRandomSlidWin(NextValue):
         return "random"
 
 
-class NextValueSequential(NextValue):
-    """Chooses next value sequentially, in the same order as they were saved."""
+class StrategyNextValueInNodeRoundRobin(StrategyNextValueInNode):
+    """Chooses next value in selected node sequentially, in the same order as they were saved."""
     def __init__(self):
         super().__init__()
 
@@ -73,11 +72,11 @@ class NextValueSequential(NextValue):
         return sequence
 
     def get_name(self):
-        return "sequential"
+        return "round robin"
 
 
-class NextValueSequentialSlidWin(NextValue):
-    """Chooses next value sequentially for graph made with sliding window mechanism, in the same order as they were saved."""
+class StrategyNextValueInNodeRoundRobinForSlidingWindow(StrategyNextValueInNode):
+    """Chooses next value in selected node sequentially for graph made with sliding window mechanism, in the same order as they were saved."""
     def __init__(self):
         super().__init__()
 
@@ -94,11 +93,11 @@ class NextValueSequentialSlidWin(NextValue):
         return sequence
 
     def get_name(self):
-        return "sequential"
+        return "round robin"
 
 
-class NextNode:
-    """Mother class for choosing next node among the neighbors of the previous node."""
+class StrategySelectNextNode:
+    """Stores strategy to chose next node from the neighbors of the previous node."""
     def __init__(self):
         self.change_graphs = 1
         self.graph = None
@@ -126,7 +125,7 @@ class NextNode:
         pass
 
 
-class NextNodeAllRandom(NextNode):
+class StrategySelectNectNodeRandomlyAcrossGraphs(StrategySelectNextNode):
     """Walks through all graphs in a multivariate graph and chooses next node randomly."""
     def __init__(self):
         super().__init__()
@@ -143,8 +142,8 @@ class NextNodeAllRandom(NextNode):
         return "walkthrough all graphs randomly"
 
 
-class NextNodeOneRandom(NextNode):
-    """Walks through one graph and chooses next node randomly.s"""
+class StrategySelectNextNodeRandomlyFromFirstGraph(StrategySelectNextNode):
+    """Walks through first graph and chooses next node randomly."""
     def __init__(self):
         super().__init__()
 

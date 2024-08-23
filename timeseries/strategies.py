@@ -1,10 +1,11 @@
 """
 Time series graphs
 """
-from core.model_previous import TimeseriesGraph
 import networkx as nx
 import itertools
 import math
+
+#TODO: migrate to the following package: to_graph
 
 
 class EdgeWeightingStrategy:
@@ -29,6 +30,14 @@ class EdgeWeightingStrategyAngle(EdgeWeightingStrategy):
 class EdgeWeightingStrategyNull(EdgeWeightingStrategy):
     def weight_edge(self, G, x1, x2, y1, y2):
         return None
+
+
+class TimeseriesGraph:
+    def __init__(self, graph):
+        self.graph = graph
+
+    def to_sequence(self, graph_to_timeseries_strategy, sequence_length):
+        return graph_to_timeseries_strategy.to_sequence(self.graph, sequence_length)
 
 
 class TimeseriesToGraphStrategy:

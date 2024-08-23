@@ -2,8 +2,8 @@ import hashlib
 import networkx as nx
 
 
-class GraphsLinkingstrategy:
-    """Mother class of linking strategies for linking multiple graphs."""
+class StrategyLinkingMultipleGraphs:
+    """Links multiple graphs together."""
     def __init__(self, graphs, num):
         self.graphs = graphs
         self.graph = None
@@ -19,7 +19,7 @@ class GraphsLinkingstrategy:
         pass
 
 
-class LinkTimeCoocurence(GraphsLinkingstrategy):
+class StrategyLinkingMultipleGraphsByTimeCooccurrence(StrategyLinkingMultipleGraphs):
     """Links nodes from multiple graphs based on their sequential order."""
     def __init__(self, graphs):
         super().__init__(graphs, 1)
@@ -74,13 +74,8 @@ class LinkTimeCoocurence(GraphsLinkingstrategy):
         return self.graph, self.graphs
 
 
-def hash(graph):
-        """Returns unique hash of this graph."""
-        str_to_hash = str(graph.nodes()) + str(graph.edges())
-        return hashlib.md5(str_to_hash.encode()).hexdigest()
 
-
-class LinkSlidingWindow(GraphsLinkingstrategy):
+class StrategyLinkingMultipleGraphsSlidingWindow(StrategyLinkingMultipleGraphs):
     """Sequentially links graphs made by sliding window mechanism."""
     def __init__(self, graphs, graph_order):
         super().__init__(graphs, 0)
@@ -90,6 +85,11 @@ class LinkSlidingWindow(GraphsLinkingstrategy):
         self.graphs = graphs
         self.graph_order = order
         return self
+    
+    def hash(self, graph):
+        """Returns unique hash of this graph."""
+        str_to_hash = str(graph.nodes()) + str(graph.edges())
+        return hashlib.md5(str_to_hash.encode()).hexdigest()
 
     def apply(self):
         g = nx.Graph()
@@ -101,7 +101,7 @@ class LinkSlidingWindow(GraphsLinkingstrategy):
             for i in range(len(self.graph_order[j])-1):
                 g.add_edge(self.graphs[j][self.graph_order[j][i]], self.graphs[j][self.graph_order[j][i+1]])
                 h.add_edge(self.graphs[j][self.graph_order[j][i]], self.graphs[j][self.graph_order[j][i+1]])
-            graphs[hash(h)] = h
+            graphs[self.hash(h)] = h
 
         self.graph = g
         self.graphs = graphs
@@ -110,7 +110,7 @@ class LinkSlidingWindow(GraphsLinkingstrategy):
 
 
 class LinkGraphs:
-    """Control class for linking multiple graphs, through which we can access linking strategies."""
+    """Builder class for linking multiple graphs, through which we can access linking strategies."""
     def __init__(self):
         self.graphs = None
         self.graph = None
@@ -119,11 +119,11 @@ class LinkGraphs:
 
     def time_cooccurrence(self):
         """Notes that we want to connect graphs in a multivariate graph based on time co-ocurrance."""
-        self.command_array.append(LinkTimeCoocurence(self.graphs))
+        self.command_array.append(StrategyLinkingMultipleGraphsByTimeCooccurrence(self.graphs))
         return self
 
     def sliding_window(self):
-        self.command_array.append(LinkSlidingWindow(self.graphs, self.graph_order))
+        self.command_array.append(StrategyLinkingMultipleGraphsSlidingWindow(self.graphs, self.graph_order))
         return self
 
     def succession(self, strategy):

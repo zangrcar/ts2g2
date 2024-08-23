@@ -1,20 +1,22 @@
-class GraphLinkingstrategy:
-    """Mother class of linking strategies for linking nodes within same graph."""
-    def __init__(self, graph, num):
+
+class StrategyLinkingGraph:
+    """Links nodes within graph."""
+    def __init__(self, graph, strategy_precedence):
         self.graph = graph
-        self.num = num
+        self.strategy_precedence = strategy_precedence
 
     def set_graph(self, graph):
         self.graph = graph
 
+    #TODO: implement/make it comparable :)
+    #TODO: rename :)
     def get_num(self):
-        return self.num
+        return self.strategy_precedence
 
     def apply(self):
         pass
 
-
-class LinkSeasonalities(GraphLinkingstrategy):
+class StrategyLinkingGraphBySeasonalities(StrategyLinkingGraph):
     """Links all nodes that are sequentially self.period apart."""
     def __init__(self, period):
         super().__init__(None, 0)
@@ -26,8 +28,8 @@ class LinkSeasonalities(GraphLinkingstrategy):
         return self.graph
 
 
-class ByValue(GraphLinkingstrategy):
-    """Links nodes based n their value."""
+class StrategyLinkingGraphByValue(StrategyLinkingGraph):
+    """Links nodes based on their value."""
     def __init__(self, graph):
         super().__init__(graph, 1)
         self.attribute = 'value'
@@ -36,8 +38,8 @@ class ByValue(GraphLinkingstrategy):
         pass
 
 
-class SameValue(ByValue):
-    "Class that notes that we want to connect nodes based on similarity of values."
+class StrategyLinkingGraphByValueWithinRange(StrategyLinkingGraphByValue):
+    "Links nodes whose value difference is within range of allowed difference."
     def __init__(self, allowed_difference):
         super().__init__(None)
         self.allowed_difference = allowed_difference
@@ -50,9 +52,9 @@ class SameValue(ByValue):
 
         return self.graph
 
-
+# TODO: this is a builder
 class LinkNodesWithinGraph:
-    """Control class for linking nodes within one graph, through which we can access linking strategies."""
+    """Builder class for linking nodes within one graph, through which we can access linking strategies."""
     def __init__(self):
         self.graph = None
         self.attribute = 'value'
@@ -69,12 +71,13 @@ class LinkNodesWithinGraph:
 
         return self.graph
 
+    #TODO: remove. superseded by comparable :)
     def succession(self, strategy):
         return strategy.get_num()
 
     def seasonalities(self, period):
         """Notes that we want to connect based on seasonalities, ad sets the period parameter."""
-        self.command_array.append(LinkSeasonalities(period))
+        self.command_array.append(StrategyLinkingGraphBySeasonalities(period))
         return self
 
     def by_value(self, strategy):

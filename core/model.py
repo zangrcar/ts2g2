@@ -1,9 +1,7 @@
-
-from core.model_previous import TimeseriesArrayStream
-from from_graph.to_time_sequence_strategy import NextValue
+from deprecated import deprecated
+from from_graph.strategy_to_time_sequence import StrategyNextValueInNode
 import to_graph.graph_linking_strategy as gs
-from core import model_previous
-from from_graph.to_time_sequence_strategy import NextNode
+from from_graph.strategy_to_time_sequence import StrategySelectNextNode
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -11,19 +9,20 @@ import hashlib
 
 import to_graph.multi_graph_linking_strategy as mgl
 import to_graph.to_graph_strategy
+from to_graph.to_graph_strategy import BuildStrategyForTimeseriesToGraph
+import copy
 
 
-
-class TimeSeries:
-    """Saves time series."""
-    def __init__(self, time_series):
-        self.time_series = time_series
+class Timeseries:
+    """Saves timeseries."""
+    def __init__(self, timeseries):
+        self.timeseries = timeseries
 
     def get_ts(self):
-        return self.time_series
+        return self.timeseries
 
-class Process:
-    """Mother class for processing the time series."""
+class TimeseriesPreprocessing:
+    """Processes timeseries."""
     def __init__(self):
         pass
 
@@ -31,8 +30,8 @@ class Process:
         pass
 
 
-class Segmentation(Process):
-    """Returns a designated segment from time series."""
+class TimeseriesPreprocessingSegmentation(TimeseriesPreprocessing):
+    """Returns a designated segment from timeseries."""
     def __init__(self, segment_start, segment_end):
         self.seg_st = segment_start
         self.seg_end = segment_end
@@ -43,8 +42,8 @@ class Segmentation(Process):
         return [self.ts]
 
 
-class SlidingWindow(Process):
-    """returns an array of segments made with sliding window mechanism, 
+class TimeseriesPreprocessingSlidingWindow(TimeseriesPreprocessing):
+    """Returns an array of segments made with sliding window mechanism, 
     each win_size long and move_len apart."""
     def __init__(self, win_size, move_len = 1):
         self.win_size = win_size
@@ -59,9 +58,11 @@ class SlidingWindow(Process):
         return self.segments
 
 
-class TimeSeriesPreprocessing():
-    """This class allows us to process time series using one or more strategies."""
-    def __init__(self, ts: TimeSeries):
+#TODO: turn this one into a Composite
+#TODO: rename: TimeseriesPreprocessingComposite
+class TimeseriesPreprocessingComposite():
+    """Composites processing strategies, allowing us to use multiple of them."""
+    def __init__(self, ts: Timeseries):
         self.ts = ts.get_ts()
         self.segments = None
         self.strategy = []
@@ -74,11 +75,22 @@ class TimeSeriesPreprocessing():
 
         for strat in self.strategy:
             self.ts = strat.process(self.ts)
-        return TimeSeriesView(self.ts)
+        return TimeseriesView(self.ts)
+
+class TimeseriesStream:
+  def read(self):
+      return None
+
+class TimeseriesArrayStream(TimeseriesStream):
+    def __init__(self, array):
+        self.array = copy.deepcopy(array)
+
+    def read(self):
+        return copy.deepcopy(self.array)
 
 
-class TimeSeriesView:
-    """Stores one or more already processed time series, changes them to graph using provided strategy.
+class TimeseriesView:
+    """Stores one or more already processed timeseries, then changes them to graph using provided strategy.
     If we have multiple timie series turned to graphs, we can link them into one multivariate graph."""
     def __init__(self, ts, attribute = 'value'):
         self.ts = [ts]
@@ -96,14 +108,14 @@ class TimeSeriesView:
             self.ts.append(time_ser)
         return self
 
-    def to_graph(self, strategy: to_graph.to_graph_strategy.Strategy):
+    def to_graph(self, strategy: to_graph.to_graph_strategy.BuildStrategyForTimeseriesToGraph):
         for ts in self.ts:
             graph_dict = {}
             order=[]
 
             counter = 0
-            for time_series in ts:
-                g =  strategy.to_graph(model_previous.TimeseriesArrayStream(time_series))
+            for timeseries in ts:
+                g =  strategy.to_graph(TimeseriesArrayStream(timeseries))
                 g = g.graph
 
                 for i in range(len(g.nodes)):
@@ -151,6 +163,8 @@ class TimeSeriesView:
         return hashlib.md5(str_to_hash.encode()).hexdigest()
 
 
+# TODO: to be renamed into TimeGraph?
+# TODO: we need to delete the TimeGraph object (not this one - the redundant one)?
 class Graph:
     """Stores already made graph, allows us to add edges and links between nodes."""
     def __init__(self, graph, graphs = None):
@@ -252,15 +266,18 @@ class Graph:
         return self
 
 
+#TODO: remove GraphMaster: superseded by Graph, and we only need to add the following method to graph: to_sequence(strategies)
+
+@deprecated
 class GraphMaster:
-    """Superclass of classes GraphSlidWin and Graph"""
+    """Turns graphs back to timeseries"""
     def __init__(self, graph):
         self.ts_view = graph
         self.graph = graph.get_graph()
         self.node_strategy = None
         self.value_strategy = None
         self.skip_values = 0
-        self.time_series_len = 100
+        self.timeseries_len = 100
         self.sequences = None
         self.switch_graphs = 1
         self.colors = None
@@ -279,20 +296,20 @@ class GraphMaster:
     def set_attribute(self, att):
         self.att = att
 
-    """Next 4 function set the parameters, that are later on used as a strategy for converting graph to time series."""
+    """Next 4 function set the parameters, that are later on used as a strategy for converting graph to timeseries."""
     """--->"""
-    def next_node_strategy(self, strategy: NextNode):
+    def next_node_strategy(self, strategy: StrategySelectNextNode):
         self.node_strategy = strategy
         self.switch_graphs = strategy.get_change()
         return self
 
-    def next_value_strategy(self, strategy: NextValue):
+    def next_value_strategy(self, strategy: StrategyNextValueInNode):
         self.value_strategy = strategy
         self.skip_values = strategy.get_skip()
         return self
 
     def ts_length(self, x):
-        self.time_series_len = x
+        self.timeseries_len = x
         return self
     """<---"""
 
@@ -314,7 +331,7 @@ class GraphMaster:
         return True
 
     def plot_timeseries(self, sequence, title, x_legend, y_legend, color):
-        """Function to sets parameters to draw time series."""
+        """Function to sets parameters to draw timeseries."""
         plt.figure(figsize=(10, 6))
         plt.plot(sequence, linestyle='-', color=color)
 
@@ -324,7 +341,7 @@ class GraphMaster:
         plt.grid(True)
 
     def draw(self):
-        """Draws time series."""
+        """Draws timeseries."""
         if self.colors == None:
             self.colors = []
             for j in range(len(self.sequences)):
@@ -335,8 +352,13 @@ class GraphMaster:
         plt.show()
 
 
+#TODO: Turn this into a visitor, and we invoke the visitor from the graph.to_sequence(visitor) method
+#TODO: graph.to_sequence(sequence_visitor)
+#TODO:    return sequence_visitor.to_sequence(self)
+#TODO: rename: ToSequenceVisitorSlidingWindow
+#TODO: refactor adding traversal strategies on instantiation
 class GraphSlidWin(GraphMaster):
-    """Class that converts graphs made using sliding window mechanism back to time series"""
+    """Converts graphs made using sliding window mechanism back to timeseries"""
     def __init__(self, graph):
         super().__init__(graph)
 
@@ -356,6 +378,7 @@ class GraphSlidWin(GraphMaster):
                 self.nodes[i].append(graph)
         return self
 
+    @deprecated
     def to_time_sequence(self):
         return self.to_multiple_time_sequences()
 
@@ -379,7 +402,7 @@ class GraphSlidWin(GraphMaster):
 
 
         i = 0
-        while len(self.sequences[0]) < self.time_series_len:
+        while len(self.sequences[0]) < self.timeseries_len:
             for j in range(len(self.sequences)):
 
                 index = 0
@@ -404,8 +427,10 @@ class GraphSlidWin(GraphMaster):
         return self
 
 
+# TODO: turn into a visitor, same as above
+#TODO: rename into: ToSequenceVisitor
 class GraphToTS(GraphMaster):
-    """Class that turns ordinary graphs back to time series."""
+    """Converts ordinary graphs back to timeseries."""
     def __init__(self, graph):
         super().__init__(graph)
 
@@ -429,6 +454,7 @@ class GraphToTS(GraphMaster):
             self.data_nodes.append(list(graph.nodes(data=True)))
         return self
 
+    @deprecated
     def to_time_sequence(self):
         self.nodes = [list(self.nodes)]
         self.data_nodes = [list(self.data_nodes)]
@@ -454,7 +480,7 @@ class GraphToTS(GraphMaster):
         self.node_strategy.set_arguments(self.graph, self.nodes, dictionaries, self.att)
 
         i = 0
-        while len(self.sequences[0]) < self.time_series_len:
+        while len(self.sequences[0]) < self.timeseries_len:
 
             for j in range(len(current_nodes)):
 
@@ -480,4 +506,6 @@ class GraphToTS(GraphMaster):
 
             i += 1
         return self
+
+
 

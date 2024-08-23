@@ -1,9 +1,9 @@
 from timeseries.strategies import EdgeWeightingStrategyNull, TimeseriesEdgeVisibilityConstraintsHorizontal, TimeseriesEdgeVisibilityConstraintsNatural, TimeseriesEdgeVisibilityConstraintsVisibilityAngle, TimeseriesToGraphStrategy
 
 
-class Strategy:
-    """Superclass of classes NaturalVisibility and HorizontalVisibility. Sets and returns a strategy with which we can
-    convert time series into graphs."""
+#TODO: this is a builder!
+class BuildStrategyForTimeseriesToGraph:
+    """Sets and returns a strategy with which we can convert timeseries into graphs."""
 
     def __init__(self):
         self.visibility = []
@@ -27,8 +27,7 @@ class Strategy:
             edge_weighting_strategy=self.edge_weighting_strategy
         )
 
-
-class NaturalVisibility(Strategy):
+class BuildTimeseriesToGraphNaturalVisibilityStrategy(BuildStrategyForTimeseriesToGraph):
     """As initial strategy sets Natural visibility strategy."""
     def __init__(self):
         super().__init__()
@@ -39,7 +38,7 @@ class NaturalVisibility(Strategy):
         return self
 
 
-class HorizontalVisibility(Strategy):
+class BuildTimeseriesToGraphHorizontalVisibilityStrategy(BuildStrategyForTimeseriesToGraph):
     """As initial strategy sets Horizontal visibility strategy."""
     def __init__(self):
         super().__init__()

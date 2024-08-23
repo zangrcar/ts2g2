@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import core.model as sg
 
 class CsvRead:
-    """Superclass of all classes for extraxtion of data from csv files.""" 
+    """Extracts data from a csv file.""" 
     def __init__(self):
         pass
 
@@ -11,29 +11,30 @@ class CsvRead:
         pass
 
 class CsvStock(CsvRead):
-    """Returns proccessed data from csv file with data sorted by date."""
+    """Returns proccessed data from csv file sorted by "Date"."""
     def __init__(self, path, y_column):
         self.path = path
         self.y_column = y_column
     
     def from_csv(self):
-        time_series = pd.read_csv(self.path)
-        time_series["Date"] = pd.to_datetime(time_series["Date"])
-        time_series.set_index("Date", inplace=True)
-        time_series = time_series[self.y_column]
-        ts = sg.TimeSeries(time_series)
+        timeseries = pd.read_csv(self.path)
+        timeseries["Date"] = pd.to_datetime(timeseries["Date"])
+        timeseries.set_index("Date", inplace=True)
+        timeseries = timeseries[self.y_column]
+        ts = sg.Timeseries(timeseries)
         return ts
 
 class XmlRead:
-    """Superclass of all classes for extraxtion of data from xml files."""
+    """Extracts data from an xml file."""
     def __init__(self):
         pass
 
     def from_xml(self):
         pass
 
+#TODO: rename
 class XmlSomething(XmlRead):
-    """One of the ways of extraction of data from xml file."""
+    """One of the ways of extracting the data from xml file."""
     def __init__(self, path, item, season = "Annual"):
         self.path = path
         self.item = item
@@ -58,5 +59,5 @@ class XmlSomething(XmlRead):
         for element in elements:
             column.append(float(element.text))
         
-        ts = sg.TimeSeries(column)
+        ts = sg.Timeseries(column)
         return ts

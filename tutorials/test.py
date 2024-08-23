@@ -2,9 +2,9 @@ import os
 import sys
 
 import from_graph.strategy_to_time_sequence
-import to_graph.graph_linking_strategy
-import to_graph.multi_graph_linking_strategy
-import to_graph.to_graph_strategy
+import to_graph.strategy_linking_graph
+import to_graph.strategy_linking_multi_graphs
+import to_graph.strategy_to_graph
 nb_dir = os.path.split(os.getcwd())[0]
 if nb_dir not in sys.path:
     sys.path.append(nb_dir)
@@ -32,10 +32,10 @@ apple_path = os.path.join(os.getcwd(), "apple", "APPLE.csv")
 test = model.TimeseriesPreprocessingComposite(inp.CsvStock(amazon_path, "Close").from_csv())\
     .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 90))\
     .process()\
-    .to_graph(to_graph.to_graph_strategy.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
+    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
     .add_edge(0,2)\
     .add_edge(13, 21, weight = 17)\
-    .link(to_graph.graph_linking_strategy.LinkNodesWithinGraph().by_value(to_graph.graph_linking_strategy.StrategyLinkingGraphByValueWithinRange(2)).seasonalities(15))\
+    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().by_value(to_graph.strategy_linking_graph.StrategyLinkingGraphByValueWithinRange(2)).seasonalities(15))\
     .draw("blue")
 
 
@@ -48,9 +48,9 @@ i = model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").fro
     .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
         .add_strategy(model.TimeseriesPreprocessingSegmentation(150, 180))\
         .process())\
-    .to_graph(to_graph.to_graph_strategy.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
-    .link(to_graph.multi_graph_linking_strategy.LinkGraphs().time_cooccurrence())\
-    .link(to_graph.graph_linking_strategy.LinkNodesWithinGraph().by_value(to_graph.graph_linking_strategy.StrategyLinkingGraphByValueWithinRange(0.5)))\
+    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
+    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().time_cooccurrence())\
+    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().by_value(to_graph.strategy_linking_graph.StrategyLinkingGraphByValueWithinRange(0.5)))\
     .combine_identical_nodes()\
     .draw("blue")
 
@@ -59,9 +59,9 @@ model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_cs
     .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 90))\
     .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
     .process()\
-    .to_graph(to_graph.to_graph_strategy.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.multi_graph_linking_strategy.LinkGraphs().sliding_window())\
-    .link(to_graph.graph_linking_strategy.LinkNodesWithinGraph().seasonalities(15))\
+    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window())\
+    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().seasonalities(15))\
     .combine_identical_nodes_slid_win()\
     .draw("green")
 
@@ -78,9 +78,9 @@ model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_cs
          .add_strategy(model.TimeseriesPreprocessingSegmentation(150, 180))\
             .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
                 .process())\
-    .to_graph(to_graph.to_graph_strategy.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.multi_graph_linking_strategy.LinkGraphs().sliding_window().time_cooccurrence())\
-    .link(to_graph.graph_linking_strategy.LinkNodesWithinGraph().seasonalities(15))\
+    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window().time_cooccurrence())\
+    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().seasonalities(15))\
     .draw("red")
 
 
@@ -104,8 +104,8 @@ x = model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").fro
     .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 120))\
     .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
     .process()\
-    .to_graph(to_graph.to_graph_strategy.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.multi_graph_linking_strategy.LinkGraphs().sliding_window())\
+    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window())\
     .combine_identical_nodes_slid_win()\
     .draw("red")
 
@@ -130,10 +130,10 @@ j = model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").fro
                     .add_strategy(model.TimeseriesPreprocessingSegmentation(150, 200))\
                         .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
                             .process()))\
-    .to_graph(to_graph.to_graph_strategy.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.multi_graph_linking_strategy.LinkGraphs().sliding_window().time_cooccurrence())\
+    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window().time_cooccurrence())\
     .combine_identical_nodes_slid_win()\
-    .link(to_graph.graph_linking_strategy.LinkNodesWithinGraph().seasonalities(15))\
+    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().seasonalities(15))\
     .draw("blue")
 
 

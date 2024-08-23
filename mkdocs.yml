@@ -47,6 +47,14 @@ edit_uri: ""
 plugins:
   - search
   - mkdocs-jupyter
+  - mkdocstrings:
+      handlers:
+        python:
+          selection:
+            filters:
+              - "!^_" 
+          options:
+            show_source: false
 
 # Markdown Extensions
 markdown_extensions:
@@ -72,7 +80,13 @@ nav:
   - Home: index.md
 
   - Documentation:
-    - Overview: documentation/overview.md
-    - Configuration: documentation/configuration.md
+    - Input/output: documentation/input_output.md
+    - Model: documentation/model.md
+    - To Time sequence strategy: documentation/strategy_to_time_sequence.md
+    - Graph linking strategy: documentation/strategy_linking_graph.md
+    - Strategy connecting multiple graphs: documentation/strategy_linking_multi_graphs.md
+    - To graph strategy: documentation/strategy_to_graph.md
 
   - Development: development.md
+
+  - Tutorial: tutorial.ipynb

@@ -1,7 +1,14 @@
 import random
 
 class StrategyNextValueInNode:
-    """Stores strategy to chose next value in the selected node."""
+    """
+    Stores strategy to chose next value in the selected node.
+    
+    **Attributes:**
+
+    - `skip`: tells us how many values do we skip before appending next one
+    """
+    
     def __init__(self):
         self.skip = 0
         self.att = 'value'
@@ -97,7 +104,16 @@ class StrategyNextValueInNodeRoundRobinForSlidingWindow(StrategyNextValueInNode)
 
 
 class StrategySelectNextNode:
-    """Stores strategy to chose next node from the neighbors of the previous node."""
+    """
+    Stores strategy to chose next node from the neighbors of the previous node.
+    
+    **Attributes:**
+
+    - `change_graphs`: tells how long we walk through one graph, before switching to next one
+    - `graph`: networkx.Graph object
+
+    """
+    
     def __init__(self):
         self.change_graphs = 1
         self.graph = None

@@ -1,20 +1,20 @@
 from deprecated import deprecated
 from from_graph.strategy_to_time_sequence import StrategyNextValueInNode
-import to_graph.graph_linking_strategy as gs
+import to_graph.strategy_linking_graph as gs
 from from_graph.strategy_to_time_sequence import StrategySelectNextNode
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import hashlib
 
-import to_graph.multi_graph_linking_strategy as mgl
-import to_graph.to_graph_strategy
-from to_graph.to_graph_strategy import BuildStrategyForTimeseriesToGraph
+import to_graph.strategy_linking_multi_graphs as mgl
+import to_graph.strategy_to_graph
+from to_graph.strategy_to_graph import BuildStrategyForTimeseriesToGraph
 import copy
 
 
 class Timeseries:
-    """Saves timeseries."""
+    """Saves extracted data as timeseries."""
     def __init__(self, timeseries):
         self.timeseries = timeseries
 
@@ -31,7 +31,15 @@ class TimeseriesPreprocessing:
 
 
 class TimeseriesPreprocessingSegmentation(TimeseriesPreprocessing):
-    """Returns a designated segment from timeseries."""
+    """
+    Returns a designated segment from timeseries.
+    
+    **Attributes:**
+
+    - `segmen_start`: start of the segment
+    - `segment_end`: end of the segment
+    
+    """
     def __init__(self, segment_start, segment_end):
         self.seg_st = segment_start
         self.seg_end = segment_end
@@ -43,8 +51,15 @@ class TimeseriesPreprocessingSegmentation(TimeseriesPreprocessing):
 
 
 class TimeseriesPreprocessingSlidingWindow(TimeseriesPreprocessing):
-    """Returns an array of segments made with sliding window mechanism, 
-    each win_size long and move_len apart."""
+    """
+    Returns an array of segments made with sliding window mechanism.
+    
+    **Attributes:**
+
+    - `win_size`: size of the creted segments
+    - `move_len`: tells for how many data does window move until next segment
+    
+    """
     def __init__(self, win_size, move_len = 1):
         self.win_size = win_size
         self.move_len = move_len
@@ -61,7 +76,13 @@ class TimeseriesPreprocessingSlidingWindow(TimeseriesPreprocessing):
 #TODO: turn this one into a Composite
 #TODO: rename: TimeseriesPreprocessingComposite
 class TimeseriesPreprocessingComposite():
-    """Composites processing strategies, allowing us to use multiple of them."""
+    """
+    Composites processing strategies, allowing us to use multiple of them.
+    
+    **Attributes:**
+
+    - `ts`: Timeseries object with extracted timeseries
+    """
     def __init__(self, ts: Timeseries):
         self.ts = ts.get_ts()
         self.segments = None
@@ -90,8 +111,17 @@ class TimeseriesArrayStream(TimeseriesStream):
 
 
 class TimeseriesView:
-    """Stores one or more already processed timeseries, then changes them to graph using provided strategy.
-    If we have multiple timie series turned to graphs, we can link them into one multivariate graph."""
+    """
+    Stores one or more already processed timeseries, then changes them to graph using provided strategy.
+    If we have multiple timie series turned to graphs, we can link them into one multivariate graph.
+    
+    **Attributes:**
+
+    - `ts`: processed timeseries
+    - `graph`: networkx.Graph object
+    
+    """
+    
     def __init__(self, ts, attribute = 'value'):
         self.ts = [ts]
         self.graphs = []
@@ -108,7 +138,7 @@ class TimeseriesView:
             self.ts.append(time_ser)
         return self
 
-    def to_graph(self, strategy: to_graph.to_graph_strategy.BuildStrategyForTimeseriesToGraph):
+    def to_graph(self, strategy: to_graph.strategy_to_graph.BuildStrategyForTimeseriesToGraph):
         for ts in self.ts:
             graph_dict = {}
             order=[]
@@ -123,13 +153,13 @@ class TimeseriesView:
                     new_value = [old_value]
                     g.nodes[i][self.attribute] = new_value
 
-                hash = self.hash(g)
+                hash = self._hash(g)
                 mapping = {node: f"{hash}_{node}" for node in g.nodes}
                 g = nx.relabel_nodes(g, mapping)
 
                 nx.set_edge_attributes(g, strategy.get_name(), "strategy")
-                graph_dict[self.hash(g) + f"_{counter}"] = g
-                order.append(self.hash(g) + f"_{counter}")
+                graph_dict[self._hash(g) + f"_{counter}"] = g
+                order.append(self._hash(g) + f"_{counter}")
 
                 if self.graph == None:
                     self.graph = g
@@ -148,16 +178,16 @@ class TimeseriesView:
     def link(self, link_strategy: mgl.LinkGraphs):
         return Graph(link_strategy.link(self.graphs, self.graph_order), graphs = self.graphs)
 
-    def get_graphs(self):
+    def _get_graphs(self):
         return self.graphs
 
-    def get_graph(self):
+    def _get_graph(self):
         if self.graph == None:
             return Graph(list(self.graphs[0].values())[0])
         else:
             return Graph(self.graph)
 
-    def hash(self, graph):
+    def _hash(self, graph):
         """Returns unique hash of this graph."""
         str_to_hash = str(graph.nodes()) + str(graph.edges())
         return hashlib.md5(str_to_hash.encode()).hexdigest()
@@ -166,17 +196,24 @@ class TimeseriesView:
 # TODO: to be renamed into TimeGraph?
 # TODO: we need to delete the TimeGraph object (not this one - the redundant one)?
 class Graph:
-    """Stores already made graph, allows us to add edges and links between nodes."""
+    """
+    Stores already made graph, allows us to add edges and links between nodes.
+    
+    **Attributes:**
+
+    - `graph`: object networkx.Graph
+    
+    """
     def __init__(self, graph, graphs = None):
         self.graph = graph
         self.orig_graph = None
         self.graphs = graphs
         self.attribute = 'value'
 
-    def get_graph(self):
+    def _get_graph(self):
         return self.graph
 
-    def get_graphs(self):
+    def _get_graphs(self):
         return self.graphs
 
     def add_edge(self, node_1, node_2, weight=None):
@@ -192,7 +229,7 @@ class Graph:
         self.graph = link_strategy.link(self)
         return self
 
-    def hash(self):
+    def _hash(self):
         """Returns unique hash of this graph."""
         str_to_hash = str(self.graph.nodes()) + str(self.graph.edges())
         return hashlib.md5(str_to_hash.encode()).hexdigest()
@@ -213,11 +250,11 @@ class Graph:
                         continue
 
                     if(set(list(node_1.edges)) == set(list(node_2.edges))):
-                        self.graph = self.__combine_nodes_win(self.graph, node_1, node_2, self.attribute)
+                        self.graph = self._combine_nodes_win(self.graph, node_1, node_2, self.attribute)
 
         return self
 
-    def __combine_nodes_win(self, graph, node_1, node_2, att):
+    def _combine_nodes_win(self, graph, node_1, node_2, att):
         """Combines nodes node_1 and node_2, that are graphs."""
         for i in range(len(list(node_1.nodes(data=True)))):
             for j in range(len(list(node_2.nodes(data=True))[i][1][att])):
@@ -245,11 +282,11 @@ class Graph:
                     continue
 
                 if(node_1[self.attribute] == node_2[self.attribute]):
-                    self.graph = self.__combine_nodes(self.graph, node_1, node_2, self.attribute)
+                    self.graph = self._combine_nodes(self.graph, node_1, node_2, self.attribute)
 
         return self
 
-    def __combine_nodes(self, graph, node_1, node_2, att):
+    def _combine_nodes(self, graph, node_1, node_2, att):
         """Combines nodes node_1 and node_2."""
         node_1[att].append(node_2[att])
         for neighbor in list(graph.neighbors(node_2)):
@@ -270,10 +307,19 @@ class Graph:
 
 @deprecated
 class GraphMaster:
-    """Turns graphs back to timeseries"""
+    """
+    Turns graphs back to timeseries.
+    
+    **Attributes:**
+
+    - `graph`: networkx.Graph object
+    - `node_strategy`: strategy_to_time_sequence.StrategySelectNextNode object
+    - `value_strategy`: strategy_to_time_sequence.StrategyNextValueInNode object
+
+    """
     def __init__(self, graph):
         self.ts_view = graph
-        self.graph = graph.get_graph()
+        self.graph = graph._get_graph()
         self.node_strategy = None
         self.value_strategy = None
         self.skip_values = 0
@@ -284,13 +330,13 @@ class GraphMaster:
         self.nodes = None
         self.data_nodes = None
         self.att = 'value'
-        self.set_nodes(graph.get_graphs())
+        self._set_nodes(graph._get_graphs())
 
-    def set_nodes(self, nodes, data_nodes):
+    def _set_nodes(self, nodes, data_nodes):
         """Sets parameters to be used if we have multivariate graph and need nodes from specific original graph."""
         pass
 
-    def set_nodes(self, dict: dict):
+    def _set_nodes(self, dict: dict):
         pass
 
     def set_attribute(self, att):
@@ -321,7 +367,7 @@ class GraphMaster:
         """Converts graph into time sequences."""
         pass
 
-    def is_equal(self, graph_1, graph_2):
+    def _is_equal(self, graph_1, graph_2):
         """Compares two graphs if they are equal."""
         if(graph_1.nodes != graph_2.nodes): return False
         if(graph_1.edges != graph_2.edges): return False
@@ -362,7 +408,7 @@ class GraphSlidWin(GraphMaster):
     def __init__(self, graph):
         super().__init__(graph)
 
-    def set_nodes(self, dicts: dict):
+    def _set_nodes(self, dicts: dict):
 
         if isinstance(dicts, list):
             graphs = [{} for _ in range(len(dicts))]
@@ -407,7 +453,7 @@ class GraphSlidWin(GraphMaster):
 
                 index = 0
                 for i in range(len(self.nodes[j])):
-                    if(self.is_equal(current_nodes[j], list(self.graph.nodes)[i])):
+                    if(self._is_equal(current_nodes[j], list(self.graph.nodes)[i])):
                         index = i
                         break
 
@@ -434,12 +480,12 @@ class GraphToTS(GraphMaster):
     def __init__(self, graph):
         super().__init__(graph)
 
-    def set_nodes(self, nodes, data_nodes):
+    def _set_nodes(self, nodes, data_nodes):
         self.nodes = nodes
         self.data_nodes = data_nodes
         return self
 
-    def set_nodes(self, dict: dict):
+    def _set_nodes(self, dict: dict):
 
         if isinstance(dict, list):
             graphs = {}

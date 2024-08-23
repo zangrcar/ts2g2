@@ -3,14 +3,24 @@ import networkx as nx
 
 
 class StrategyLinkingMultipleGraphs:
-    """Links multiple graphs together."""
-    def __init__(self, graphs, num):
+    """
+    Links multiple graphs together.
+    
+    **Attributes:**
+
+    - `graph`: networkx.Graph object
+    - `graphs`: dictionary of networkx.Graph objects
+    - `strategy_precedence`: tells in which order should the strategies be excetuted
+    
+    """
+    
+    def __init__(self, graphs, strategy_precedence):
         self.graphs = graphs
         self.graph = None
-        self.num = num
+        self.strategy_precedence = strategy_precedence
 
-    def get_num(self):
-        return self.num
+    def get_strategy_precedence(self):
+        return self.strategy_precedence
 
     def set_graphs(self, graphs, order):
         pass
@@ -29,7 +39,7 @@ class StrategyLinkingMultipleGraphsByTimeCooccurrence(StrategyLinkingMultipleGra
         return self
 
     def apply(self):
-        """Connects graphs in a multivariate graph based on time co-ocurrence."""
+
         g = nx.Graph()
 
         min_size = None
@@ -86,7 +96,7 @@ class StrategyLinkingMultipleGraphsSlidingWindow(StrategyLinkingMultipleGraphs):
         self.graph_order = order
         return self
     
-    def hash(self, graph):
+    def _hash(self, graph):
         """Returns unique hash of this graph."""
         str_to_hash = str(graph.nodes()) + str(graph.edges())
         return hashlib.md5(str_to_hash.encode()).hexdigest()
@@ -101,7 +111,7 @@ class StrategyLinkingMultipleGraphsSlidingWindow(StrategyLinkingMultipleGraphs):
             for i in range(len(self.graph_order[j])-1):
                 g.add_edge(self.graphs[j][self.graph_order[j][i]], self.graphs[j][self.graph_order[j][i+1]])
                 h.add_edge(self.graphs[j][self.graph_order[j][i]], self.graphs[j][self.graph_order[j][i+1]])
-            graphs[self.hash(h)] = h
+            graphs[self._hash(h)] = h
 
         self.graph = g
         self.graphs = graphs
@@ -110,7 +120,16 @@ class StrategyLinkingMultipleGraphsSlidingWindow(StrategyLinkingMultipleGraphs):
 
 
 class LinkGraphs:
-    """Builder class for linking multiple graphs, through which we can access linking strategies."""
+    """
+    Builder class for linking multiple graphs, through which we can access linking strategies.
+    
+    **Attributes:**
+
+    - `graph`: networkx.Graph object
+    - `graphs`: dictionary of networkx.Graph objects
+    - `command_array`: an array that stores linking strategies
+    
+    """
     def __init__(self):
         self.graphs = None
         self.graph = None
@@ -123,11 +142,12 @@ class LinkGraphs:
         return self
 
     def sliding_window(self):
+        """Notes that we want to connect graphs in a multivariate graph to create sliding window graph."""
         self.command_array.append(StrategyLinkingMultipleGraphsSlidingWindow(self.graphs, self.graph_order))
         return self
 
     def succession(self, strategy):
-        return strategy.get_num()
+        return strategy.get_strategy_precedence()
 
     def link(self, graphs, graph_order):
         self.graphs = graphs

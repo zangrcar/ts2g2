@@ -3,7 +3,14 @@ from timeseries.strategies import EdgeWeightingStrategyNull, TimeseriesEdgeVisib
 
 #TODO: this is a builder!
 class BuildStrategyForTimeseriesToGraph:
-    """Sets and returns a strategy with which we can convert timeseries into graphs."""
+    """
+    Sets and returns a strategy with which we can convert timeseries into graphs.
+    
+    **Attributes:**
+
+    - `visibility`: an array of visibility constraints strategies
+    
+    """
 
     def __init__(self):
         self.visibility = []

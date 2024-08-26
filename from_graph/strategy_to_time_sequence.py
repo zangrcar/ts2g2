@@ -141,7 +141,7 @@ class StrategySelectNextNode:
         pass
 
 
-class StrategySelectNectNodeRandomlyAcrossGraphs(StrategySelectNextNode):
+class StrategySelectNextNodeRandomlyAcrossGraphs(StrategySelectNextNode):
     """Walks through all graphs in a multivariate graph and chooses next node randomly."""
     def __init__(self):
         super().__init__()

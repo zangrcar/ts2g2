@@ -1,5 +1,8 @@
 import numpy as np
 
+
+#TODO: to be migrated/superseded by strategies_to_time_sequence
+#TODO: after migration, delete
 class GraphToTimeseriesStrategy:
     def to_sequence(self, graph, sequence_length):
         return None

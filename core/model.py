@@ -311,11 +311,6 @@ class TimeGraph:
         self.sequences = sequence_visitor.to_sequence(self)
         return self
     
-    def to_multiple_sequences(self, sequence_visitor):
-        self.sequence_visitor = sequence_visitor
-        self.sequences = sequence_visitor.to_multiple_sequences(self)
-        return self
-    
     def draw_sequence(self):
         """Draws timeseries."""
 

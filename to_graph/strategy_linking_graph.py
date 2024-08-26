@@ -91,7 +91,7 @@ class LinkNodesWithinGraph:
     def link(self, graph):
         self.graph = graph._get_graph()
 
-        print(type(self.command_array[0]))
+        self.command_array.sort(key=functools.cmp_to_key(compare))
 
         for strat in self.command_array:
             strat.set_graph(self.graph)

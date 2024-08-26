@@ -13,6 +13,8 @@ from to_graph.strategy_to_graph import BuildStrategyForTimeseriesToGraph
 import copy
 
 
+
+
 class Timeseries:
     """Saves extracted data as timeseries."""
     def __init__(self, timeseries):

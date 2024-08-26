@@ -49,5 +49,3 @@ class TimeseriesToQuantileGraph:
 
         return G
 
-
-

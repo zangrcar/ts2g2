@@ -81,7 +81,7 @@ nav:
   - Home: index.md
 
   - Documentation:
-    - Input/output: documentation/input_output.md
+    - Input/output: documentation/tsg_io.md
     - Model: documentation/model.md
     - To Time sequence strategy: documentation/strategy_to_time_sequence.md
     - Graph linking strategy: documentation/strategy_linking_graph.md

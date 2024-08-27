@@ -21,8 +21,6 @@ class StrategyLinkingGraph:
     def set_graph(self, graph):
         self.graph = graph
 
-    #TODO: implement/make it comparable :)
-    #TODO: rename :)
     def get_strategy_precedence(self):
         return self.strategy_precedence
 

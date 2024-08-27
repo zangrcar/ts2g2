@@ -1,13 +1,28 @@
 # ts2g<sup>2</sup>
 
-TS2G<sup>2</sup> stands for "timeseries to graphs and back". The library implements a variety of strategies to convert timeseries into graphs, and convert graphs into sequences.
+TS2G<sup>2</sup> stands for "timeseries to graphs and back". The library implements a variety of strategies to convert timeseries into graphs, and convert graphs into sequences. Below, we provide a code snippet to generate a graph from timeseries:
+    
+    # load time series from a file
+    timegraph = model.Timeseries(CsvStock(some_file_path, "ColumnOfInterest").from_csv())\
 
-    stream = TimeseriesArrayStream([2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3])
-    timeseries = Timeseries(stream)
-    g = timeseries.to_graph(NaturalVisibilityGraphStrategy())
-    sequence = g.to_sequence(RandomWalkSequenceGenerationStrategy(), sequence_length=500)
+    # and preprocess the timeseries with multiple preprocessing strategies
+    .with_preprocessing(model.TimeseriesPreprocessingComposite()\
+        .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 120))\
+        .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5)))\
 
-For a more detailed example, look at the [Amazon stocks demo](https://github.com/graph-massivizer/ts2g2/blob/main/tutorials/demo-amazon-stocks.ipynb).
+    # then create a graph from the timeseries, following a particular strategy
+    .to_graph(tgs.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+
+    # link graphs that result from the same timeseries, but at different sliding window frames
+    .link(mgl.LinkGraphs().sliding_window())\
+
+    # and combine identical graphs that result from the abovementioned time windows into single nodes
+    .combine_identical_nodes_slid_win()\
+
+    # finally, draw the graph
+    .draw("red")
+
+For a more detailed example, look at the [Amazon stocks demo](https://github.com/graph-massivizer/ts2g2/blob/main/tutorials/demo-ts2g2.ipynb).
 
 Many of the methods implemented in this library are described in _Silva, Vanessa Freitas, et al. "Time series analysis via network science: Concepts and algorithms." Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery 11.3 (2021): e1404._ Nevertheless, the library also includes additional techniques found in other works from the scientific literature.
 
@@ -41,71 +56,51 @@ The package is a joint effort between the [Jožef Stefan Institute](https://www.
   <tr>
     <td class="tg-7btt">1</td>
     <td class="tg-0pky">Natural Visibility Graph</td>
-    <td class="tg-0pky">
-        X
-    </td>
-    <td class="tg-0pky">
-      <!-- directed -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- weighted -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: penetration -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: angle -->
-      X
-    </td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
   </tr>
   <tr>
     <td class="tg-7btt">2</td>
     <td class="tg-0pky">Horizontal Visibility Graph</td>
-    <td class="tg-0pky">
-      X
-    </td>
-    <td class="tg-0pky">
-        <!-- directed -->
-        X
-    </td>
-    <td class="tg-0pky">
-      <!-- weighted -->
-      X 
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: penetration -->
-      X
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: angle -->
-      X
-    </td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
   </tr>
   <tr>
     <td class="tg-7btt">3</td>
     <td class="tg-0pky">Difference Visibility Graph</td>
-    <td class="tg-0pky">
-        <!-- undirected -->
-    </td>
-    <td class="tg-0pky">
-      <!-- directed -->
-    </td>
-    <td class="tg-0pky">
-      <!-- weighted -->
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: penetration -->
-    </td>
-    <td class="tg-0pky">
-      <!-- constraints:references: angle -->
-    </td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+  </tr>
+  <tr>
+    <td class="tg-7btt">4</td>
+    <td class="tg-0pky">Quantile Graph</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
+  </tr>
+
+  <tr>
+    <td class="tg-7btt">5</td>
+    <td class="tg-0pky">Ordinal Partition Graph</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky">X</td>
+    <td class="tg-0pky"></td>
+    <td class="tg-0pky"></td>
   </tr>
 </tbody>
 </table>
-
 
 #### References table
 
@@ -193,6 +188,49 @@ The package is a joint effort between the [Jožef Stefan Institute](https://www.
       <!-- constraints:references: angle -->
     </td>
   </tr>
+<tr>
+    <td class="tg-7btt">4</td>
+    <td class="tg-0pky">Quantile Graph</td>
+    <td class="tg-0pky">
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- directed -->
+      <a href="https://www.researchgate.net/figure/Illustrative-example-of-the-quantile-graph-algorithm-for-Q-4-On-the-left-panel-we_fig8_349721222">ref</a>
+    </td>
+    <td class="tg-0pky">
+      <!-- weighted -->
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: penetration -->
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: angle -->
+    </a>
+    </td>
+  </tr><tr>
+    <td class="tg-7btt">5</td>
+    <td class="tg-0pky">Ordinal Partition Graph</td>
+    <td class="tg-0pky">
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- directed -->
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- weighted -->
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: penetration -->
+    </a>
+    </td>
+    <td class="tg-0pky">
+      <!-- constraints:references: angle -->
+    </a>
+    </td>
+  </tr>
 </tbody>
 </table>
 
@@ -200,15 +238,15 @@ The package is a joint effort between the [Jožef Stefan Institute](https://www.
 
 ### Graphs to timeseries conversion
 
-Graphs are converted back to timeseries by sampling node values from the graph following different strategies. The following strategies have been implemented so far:
+Graphs are converted back to timeseries by sampling node values from the graph following different strategies. Below, we provide a short snippet of code, to illustrate how this can be done.
 
- - random node
- - random node neighbour
- - random node degree 
- - random walk
- - random walk with restart
- - random walk with jump
+    timegraph.to_sequence(model.ToSequenceVisitorSlidingWindow()\
+    .next_node_strategy(tts.StrategySelectNextNodeRandomlyFromFirstGraph())\
+    .next_value_strategy(tts.StrategyNextValueInNodeRandomForSlidingWindow().skip_every_x_steps(1))\
+    .ts_length(50))\
+    .draw_sequence()
 
+When choosing the next node, the following strategies have been implemented so far: random node, random node neighbour, random node degree, random walk, random walk with restart, random walk with jump.
 
 ## Publications
 

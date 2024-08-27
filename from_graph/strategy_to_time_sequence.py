@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 class StrategyNextValueInNode:
     """
@@ -103,6 +104,9 @@ class StrategyNextValueInNodeRoundRobinForSlidingWindow(StrategyNextValueInNode)
         return "round robin"
 
 
+
+
+
 class StrategySelectNextNode:
     """
     Stores strategy to chose next node from the neighbors of the previous node.
@@ -141,7 +145,7 @@ class StrategySelectNextNode:
         pass
 
 
-class StrategySelectNextNodeRandomlyAcrossGraphs(StrategySelectNextNode):
+class StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs(StrategySelectNextNode):
     """Walks through all graphs in a multivariate graph and chooses next node randomly."""
     def __init__(self):
         super().__init__()
@@ -155,10 +159,10 @@ class StrategySelectNextNodeRandomlyAcrossGraphs(StrategySelectNextNode):
         return random.choice(neighbors)
 
     def get_name(self):
-        return "walkthrough all graphs randomly"
+        return "walkthrough all graphs randomly from neighbours"
 
 
-class StrategySelectNextNodeRandomlyFromFirstGraph(StrategySelectNextNode):
+class StrategySelectNextNodeRandomlyFromNeighboursFromFirstGraph(StrategySelectNextNode):
     """Walks through first graph and chooses next node randomly."""
     def __init__(self):
         super().__init__()
@@ -171,4 +175,64 @@ class StrategySelectNextNodeRandomlyFromFirstGraph(StrategySelectNextNode):
         return random.choice(neighbors)
 
     def get_name(self):
-        return "walkthrough one graph randomly"
+        return "walkthrough one graph randomly from neighbours"
+
+#TODO: fix this
+class StrategySelectNextNodeRandomly(StrategySelectNextNode):
+    
+    def __init__(self):
+        super().__init__()
+    
+    def next_node(self, i, graph_index, nodes, switch, node):
+        return random.choice(self.nodes[graph_index])
+    
+    def get_name(self):
+        return "Random walkthrough the nodes"
+    
+
+#TODO: fix this
+class StrategySelectNextNodeRandomDegree(StrategySelectNextNode):
+
+    def __init__(self):
+        super().__init__()
+
+    def next_node(self, i, graph_index, nodes, switch, node):
+        nodes_weighted_tuples = [(n, float(len([x for x in list(set(self.nodes[graph_index]) & set(self.graph.neighbors(n)))]))/float(len(nodes[graph_index]))) for n in nodes[graph_index]]
+        nodes = [n[0] for n in nodes_weighted_tuples]
+        node_weights = [n[1] for n in nodes_weighted_tuples]
+        if np.min(node_weights)>0:
+            node_weights = np.round(np.divide(node_weights, np.min(node_weights)), decimals=4)
+        node_weights = np.divide(node_weights, np.sum(node_weights))
+
+        return np.random.choice(nodes, p=node_weights)
+    
+
+    def get_name(self):
+        return "Random degree walkthrough the nodes"
+    
+#TODO: fix this
+class StrategySelectNextNodeRandomWithRestart(StrategySelectNextNode):
+    
+    def __init__(self):
+        super().__init__()
+        self.first_node = None
+    
+    def next_node(self, i, graph_index, nodes, switch, node):
+        
+        if self.first_node == None:
+            self.first_node = []
+            for i in range(len(nodes)):
+                self.first_node.append(np.random.choice(nodes[i]))
+
+        if np.random.random() <0.15:
+            return self.first_node[graph_index]
+        
+        if len(nodes) == 0:
+            node = self.first_node[graph_index]
+        else:
+            node = np.random.choice(nodes[graph_index])
+
+        return node
+    
+    def get_name(self):
+        return "Random walk with restart"

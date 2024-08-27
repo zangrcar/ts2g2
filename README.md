@@ -1,13 +1,23 @@
 # ts2g<sup>2</sup>
 
 TS2G<sup>2</sup> stands for "timeseries to graphs and back". The library implements a variety of strategies to convert timeseries into graphs, and convert graphs into sequences.
+    
+    # load time series from a file
+    model.Timeseries(CsvStock(some_file_path, "ColumnOfInterest").from_csv())\
+    # and preprocess the timeseries with multiple preprocessing strategies
+    .with_preprocessing(model.TimeseriesPreprocessingComposite()\
+        .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 120))\
+        .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5)))\
+    # then create a graph from the timeseries, following a particular strategy
+    .to_graph(tgs.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    # link graphs that result from the same timeseries, but at different sliding window frames
+    .link(mgl.LinkGraphs().sliding_window())\
+    # and combine identical graphs that result from the abovementioned time windows into single nodes
+    .combine_identical_nodes_slid_win()\
+    # finally, draw the graph
+    .draw("red")
 
-    stream = TimeseriesArrayStream([2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3])
-    timeseries = Timeseries(stream)
-    g = timeseries.to_graph(NaturalVisibilityGraphStrategy())
-    sequence = g.to_sequence(RandomWalkSequenceGenerationStrategy(), sequence_length=500)
-
-For a more detailed example, look at the [Amazon stocks demo](https://github.com/graph-massivizer/ts2g2/blob/main/tutorials/demo-amazon-stocks.ipynb).
+For a more detailed example, look at the [Amazon stocks demo](https://github.com/graph-massivizer/ts2g2/blob/main/tutorials/demo-ts2g2.ipynb).
 
 Many of the methods implemented in this library are described in _Silva, Vanessa Freitas, et al. "Time series analysis via network science: Concepts and algorithms." Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery 11.3 (2021): e1404._ Nevertheless, the library also includes additional techniques found in other works from the scientific literature.
 

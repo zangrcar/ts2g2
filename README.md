@@ -1,9 +1,9 @@
 # ts2g<sup>2</sup>
 
-TS2G<sup>2</sup> stands for "timeseries to graphs and back". The library implements a variety of strategies to convert timeseries into graphs, and convert graphs into sequences.
+TS2G<sup>2</sup> stands for "timeseries to graphs and back". The library implements a variety of strategies to convert timeseries into graphs, and convert graphs into sequences. Below, we provide a code snippet to generate a graph from timeseries:
     
     # load time series from a file
-    model.Timeseries(CsvStock(some_file_path, "ColumnOfInterest").from_csv())\
+    timegraph = model.Timeseries(CsvStock(some_file_path, "ColumnOfInterest").from_csv())\
 
     # and preprocess the timeseries with multiple preprocessing strategies
     .with_preprocessing(model.TimeseriesPreprocessingComposite()\
@@ -238,15 +238,15 @@ The package is a joint effort between the [Jožef Stefan Institute](https://www.
 
 ### Graphs to timeseries conversion
 
-Graphs are converted back to timeseries by sampling node values from the graph following different strategies. The following strategies have been implemented so far:
+Graphs are converted back to timeseries by sampling node values from the graph following different strategies. Below, we provide a short snippet of code, to illustrate how this can be done.
 
- - random node
- - random node neighbour
- - random node degree 
- - random walk
- - random walk with restart
- - random walk with jump
+    timegraph.to_sequence(model.ToSequenceVisitorSlidingWindow()\
+    .next_node_strategy(tts.StrategySelectNextNodeRandomlyFromFirstGraph())\
+    .next_value_strategy(tts.StrategyNextValueInNodeRandomForSlidingWindow().skip_every_x_steps(1))\
+    .ts_length(50))\
+    .draw_sequence()
 
+When choosing the next node, the following strategies have been implemented so far: random node, random node neighbour, random node degree, random walk, random walk with restart, random walk with jump.
 
 ## Publications
 

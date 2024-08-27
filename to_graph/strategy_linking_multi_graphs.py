@@ -1,6 +1,9 @@
 import hashlib
 import networkx as nx
+import functools
 
+def compare(x, y):
+    return x.get_strategy_precedence() - y.get_strategy_precedence()
 
 class StrategyLinkingMultipleGraphs:
     """
@@ -146,14 +149,12 @@ class LinkGraphs:
         self.command_array.append(StrategyLinkingMultipleGraphsSlidingWindow(self.graphs, self.graph_order))
         return self
 
-    def succession(self, strategy):
-        return strategy.get_strategy_precedence()
 
     def link(self, graphs, graph_order):
         self.graphs = graphs
         self.graph_order = graph_order
 
-        self.command_array.sort(key=self.succession)
+        self.command_array.sort(key=functools.cmp_to_key(compare))
 
         for strat in self.command_array:
             strat.set_graphs(self.graphs, graph_order)

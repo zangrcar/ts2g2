@@ -31,8 +31,7 @@ class CsvStock(CsvRead):
         timeseries["Date"] = pd.to_datetime(timeseries["Date"])
         timeseries.set_index("Date", inplace=True)
         timeseries = timeseries[self.y_column]
-        ts = sg.Timeseries(timeseries)
-        return ts
+        return timeseries
 
 class XmlRead:
     """Extracts data from an xml file."""
@@ -81,5 +80,4 @@ class XmlSomething(XmlRead):
         for element in elements:
             column.append(float(element.text))
         
-        ts = sg.Timeseries(column)
-        return ts
+        return column

@@ -1,3 +1,7 @@
+import functools
+
+def compare(x, y):
+    return x.get_strategy_precedence() - y.get_strategy_precedence()
 
 class StrategyLinkingGraph:
     """
@@ -87,17 +91,13 @@ class LinkNodesWithinGraph:
     def link(self, graph):
         self.graph = graph._get_graph()
 
-        self.command_array.sort(key=self.succession)
+        self.command_array.sort(key=functools.cmp_to_key(compare))
 
         for strat in self.command_array:
             strat.set_graph(self.graph)
             self.graph = strat.apply()
 
         return self.graph
-
-    #TODO: remove. superseded by comparable :)
-    def succession(self, strategy):
-        return strategy.get_strategy_precedence()
 
     def seasonalities(self, period):
         """Notes that we want to connect based on seasonalities, ad sets the period parameter."""

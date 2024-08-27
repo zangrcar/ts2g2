@@ -1,145 +1,93 @@
 import os
 import sys
-
-import from_graph.strategy_to_time_sequence
-import to_graph.strategy_linking_graph
-import to_graph.strategy_linking_multi_graphs
-import to_graph.strategy_to_graph
 nb_dir = os.path.split(os.getcwd())[0]
 if nb_dir not in sys.path:
     sys.path.append(nb_dir)
 
-#import os
-import csv
-import numpy as np
-import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
-from timeseries.strategies import TimeseriesToGraphStrategy, TimeseriesEdgeVisibilityConstraintsNatural, TimeseriesEdgeVisibilityConstraintsHorizontal, EdgeWeightingStrategyNull, TimeseriesEdgeVisibilityConstraintsVisibilityAngle
-from generation.strategies import RandomWalkWithRestartSequenceGenerationStrategy, RandomWalkSequenceGenerationStrategy, RandomNodeSequenceGenerationStrategy, RandomNodeNeighbourSequenceGenerationStrategy, RandomDegreeNodeSequenceGenerationStrategy
-from core import model 
-from sklearn.model_selection import train_test_split
-import itertools
+from core import model
 
-import xml.etree.ElementTree as ET
-
-import input_output.input as inp
+from input_output import input as inp
+import from_graph.strategy_to_time_sequence as tts
+import to_graph.strategy_linking_graph as gls
+import to_graph.strategy_linking_multi_graphs as mgl
+import to_graph.strategy_to_graph as tgs
 
 amazon_path = os.path.join(os.getcwd(), "amazon", "AMZN.csv")
 apple_path = os.path.join(os.getcwd(), "apple", "APPLE.csv")
 
 
-test = model.TimeseriesPreprocessingComposite(inp.CsvStock(amazon_path, "Close").from_csv())\
-    .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 90))\
-    .process()\
-    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
+test = model.Timeseries(inp.CsvStock(amazon_path, "Close").from_csv())\
+    .with_preprocessing(model.TimeseriesPreprocessingSegmentation(60, 90))\
+    .to_graph(tgs.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
     .add_edge(0,2)\
     .add_edge(13, 21, weight = 17)\
-    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().by_value(to_graph.strategy_linking_graph.StrategyLinkingGraphByValueWithinRange(2)).seasonalities(15))\
+    .link(gls.LinkNodesWithinGraph().by_value(gls.StrategyLinkingGraphByValueWithinRange(2)).seasonalities(15))\
     .draw("blue")
 
 
-i = model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-    .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 90))\
-    .process()\
-    .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-        .add_strategy(model.TimeseriesPreprocessingSegmentation(90, 120))\
-        .process())\
-    .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-        .add_strategy(model.TimeseriesPreprocessingSegmentation(150, 180))\
-        .process())\
-    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
-    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().time_cooccurrence())\
-    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().by_value(to_graph.strategy_linking_graph.StrategyLinkingGraphByValueWithinRange(0.5)))\
-    .combine_identical_nodes()\
-    .draw("blue")
-
-
-model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-    .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 90))\
-    .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-    .process()\
-    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window())\
-    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().seasonalities(15))\
+x = model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+    .with_preprocessing(model.TimeseriesPreprocessingComposite()\
+        .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 120))\
+        .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5)))\
+    .to_graph(tgs.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    .link(mgl.LinkGraphs().sliding_window())\
     .combine_identical_nodes_slid_win()\
+    .draw("red")
+
+i = model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+    .with_preprocessing(model.TimeseriesPreprocessingSegmentation(60, 90))\
+    .add(model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+        .with_preprocessing(model.TimeseriesPreprocessingSegmentation(90, 120)))\
+    .add(model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+        .with_preprocessing(model.TimeseriesPreprocessingSegmentation(150, 180)))\
+    .to_graph(tgs.BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
+    .link(mgl.LinkGraphs().time_cooccurrence())\
+    .link(gls.LinkNodesWithinGraph().by_value(gls.StrategyLinkingGraphByValueWithinRange(0.5)))\
+    .combine_identical_nodes()\
+    .draw("brown")
+
+j = model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+    .with_preprocessing(model.TimeseriesPreprocessingComposite()\
+        .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 110))\
+        .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5)))\
+    .add(model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+        .with_preprocessing(model.TimeseriesPreprocessingComposite()\
+            .add_strategy(model.TimeseriesPreprocessingSegmentation(120, 170))\
+            .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5)))\
+        .add(model.Timeseries(inp.CsvStock(apple_path, "Close").from_csv())\
+            .with_preprocessing(model.TimeseriesPreprocessingComposite()\
+                    .add_strategy(model.TimeseriesPreprocessingSegmentation(190, 240))\
+                    .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5)))))\
+    .to_graph(tgs.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
+    .link(mgl.LinkGraphs().sliding_window().time_cooccurrence())\
+    .combine_identical_nodes_slid_win()\
+    .link(gls.LinkNodesWithinGraph().seasonalities(15))\
     .draw("green")
 
 
-model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-    .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 90))\
-    .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-    .process()\
-    .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-         .add_strategy(model.TimeseriesPreprocessingSegmentation(90, 120))\
-            .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-                .process())\
-    .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-         .add_strategy(model.TimeseriesPreprocessingSegmentation(150, 180))\
-            .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-                .process())\
-    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window().time_cooccurrence())\
-    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().seasonalities(15))\
-    .draw("red")
+test.to_sequence(model.ToSequenceVisitor()\
+        .next_node_strategy(tts.StrategySelectNextNodeRandomlyAcrossGraphs())\
+        .next_value_strategy(tts.StrategyNextValueInNodeRoundRobin().skip_every_x_steps(1))\
+        .ts_length(100))\
+    .draw_sequence()
 
 
-model.GraphToTS(test)\
-    .next_node_strategy(from_graph.strategy_to_time_sequence.StrategySelectNectNodeRandomlyAcrossGraphs())\
-    .next_value_strategy(from_graph.strategy_to_time_sequence.StrategyNextValueInNodeRoundRobin().skip_every_x_steps(1))\
-    .ts_length(100)\
-    .to_multiple_time_sequences()\
-    .draw()
+x.to_sequence(model.ToSequenceVisitorSlidingWindow()\
+    .next_node_strategy(tts.StrategySelectNextNodeRandomlyFromFirstGraph())\
+    .next_value_strategy(tts.StrategyNextValueInNodeRandomForSlidingWindow().skip_every_x_steps(1))\
+    .ts_length(50))\
+    .draw_sequence()
 
 
-model.GraphToTS(i)\
-    .next_node_strategy(from_graph.strategy_to_time_sequence.StrategySelectNectNodeRandomlyAcrossGraphs().change_graphs_every_x_steps(2))\
-    .next_value_strategy(from_graph.strategy_to_time_sequence.StrategyNextValueInNodeRoundRobin().skip_every_x_steps(1))\
-    .ts_length(50)\
-    .to_multiple_time_sequences()\
-    .draw()
+i.to_sequence(model.ToSequenceVisitor()\
+    .next_node_strategy(tts.StrategySelectNextNodeRandomlyAcrossGraphs().change_graphs_every_x_steps(2))\
+    .next_value_strategy(tts.StrategyNextValueInNodeRoundRobin().skip_every_x_steps(1))\
+    .ts_length(50))\
+    .draw_sequence()
 
 
-x = model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-    .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 120))\
-    .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-    .process()\
-    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window())\
-    .combine_identical_nodes_slid_win()\
-    .draw("red")
-
-
-model.GraphSlidWin(x)\
-    .next_node_strategy(from_graph.strategy_to_time_sequence.StrategySelectNextNodeRandomlyFromFirstGraph())\
-    .next_value_strategy(from_graph.strategy_to_time_sequence.StrategyNextValueInNodeRandomForSlidingWindow().skip_every_x_steps(1))\
-    .ts_length(50)\
-    .to_time_sequence()\
-    .draw()
-
-
-j = model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-    .add_strategy(model.TimeseriesPreprocessingSegmentation(60, 110))\
-    .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-    .process()\
-    .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-         .add_strategy(model.TimeseriesPreprocessingSegmentation(90, 140))\
-            .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-                .process()\
-                .add(model.TimeseriesPreprocessingComposite(inp.CsvStock(apple_path, "Close").from_csv())\
-                    .add_strategy(model.TimeseriesPreprocessingSegmentation(150, 200))\
-                        .add_strategy(model.TimeseriesPreprocessingSlidingWindow(5))\
-                            .process()))\
-    .to_graph(to_graph.strategy_to_graph.BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
-    .link(to_graph.strategy_linking_multi_graphs.LinkGraphs().sliding_window().time_cooccurrence())\
-    .combine_identical_nodes_slid_win()\
-    .link(to_graph.strategy_linking_graph.LinkNodesWithinGraph().seasonalities(15))\
-    .draw("blue")
-
-
-model.GraphSlidWin(j)\
-    .next_node_strategy(from_graph.strategy_to_time_sequence.StrategySelectNextNodeRandomlyFromFirstGraph())\
-    .next_value_strategy(from_graph.strategy_to_time_sequence.StrategyNextValueInNodeRoundRobinForSlidingWindow())\
-    .ts_length(100)\
-    .to_multiple_time_sequences()\
-    .draw()
+j.to_sequence(model.ToSequenceVisitorSlidingWindow()\
+    .next_node_strategy(tts.StrategySelectNextNodeRandomlyFromFirstGraph())\
+    .next_value_strategy(tts.StrategyNextValueInNodeRoundRobinForSlidingWindow())\
+    .ts_length(100))\
+    .draw_sequence()

@@ -29,10 +29,11 @@ class Timeseries:
 class TimeseriesPreprocessing:
     """Processes timeseries."""
     def __init__(self):
-        pass
+        self.ts = None
 
     def process(self, ts):
-        pass
+        self.ts = ts
+        return TimeseriesView([ts])
 
 
 class TimeseriesPreprocessingSegmentation(TimeseriesPreprocessing):
@@ -48,6 +49,7 @@ class TimeseriesPreprocessingSegmentation(TimeseriesPreprocessing):
     def __init__(self, segment_start, segment_end):
         self.seg_st = segment_start
         self.seg_end = segment_end
+        self.ts = None
 
     def process(self, ts):
         self.ts = ts[self.seg_st:self.seg_end]
@@ -90,7 +92,7 @@ class TimeseriesPreprocessingComposite():
         self.segments = None
         self.strategy = []
 
-    def add_strategy(self, strat):
+    def add(self, strat):
         self.strategy.append(strat)
         return self
     
@@ -238,7 +240,7 @@ class TimeGraph:
         str_to_hash = str(self.graph.nodes()) + str(self.graph.edges())
         return hashlib.md5(str_to_hash.encode()).hexdigest()
 
-    def combine_identical_nodes_slid_win(self):
+    def combine_identical_subgraphs(self):
         """Combines nodes that have same value of attribute self.attribute if graph is classical graph and
         nodes that are identical graphs if graph is created using sliding window mechanism."""
         self.orig_graph = self.graph.copy()
@@ -254,11 +256,11 @@ class TimeGraph:
                         continue
 
                     if(set(list(node_1.edges)) == set(list(node_2.edges))):
-                        self.graph = self._combine_nodes_win(self.graph, node_1, node_2, self.attribute)
+                        self.graph = self._combine_subgraphs(self.graph, node_1, node_2, self.attribute)
 
         return self
 
-    def _combine_nodes_win(self, graph, node_1, node_2, att):
+    def _combine_subgraphs(self, graph, node_1, node_2, att):
         """Combines nodes node_1 and node_2, that are graphs."""
         for i in range(len(list(node_1.nodes(data=True)))):
             for j in range(len(list(node_2.nodes(data=True))[i][1][att])):
@@ -446,7 +448,7 @@ class ToSequenceVisitorSlidingWindow(ToSequenceVisitorMaster):
         self.node_strategy.set_arguments(self.graph, self.nodes, dictionaries, self.att)
 
 
-        i = 0
+        ts_len = 0
         while len(self.sequences[0]) < self.timeseries_len:
             for j in range(len(self.sequences)):
 
@@ -463,12 +465,12 @@ class ToSequenceVisitorSlidingWindow(ToSequenceVisitorMaster):
             for j in range(self.skip_values + 1):
                 for k in range(len(current_nodes)):
 
-                    current_nodes[k] = self.node_strategy.next_node(i, k, current_nodes, self.switch_graphs, current_nodes[0])
+                    current_nodes[k] = self.node_strategy.next_node(ts_len, k, current_nodes, self.switch_graphs, current_nodes[0])
 
                     if(current_nodes[k] == None):
                         return self
 
-            i += 1
+            ts_len += 1
         return self.sequences
 
 class ToSequenceVisitor(ToSequenceVisitorMaster):

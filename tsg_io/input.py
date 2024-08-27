@@ -10,7 +10,7 @@ class CsvRead:
     def from_csv(self):
         pass
 
-class CsvStock(CsvRead):
+class CsvFile(CsvRead):
     """
     Returns proccessed data from csv file sorted by "Date".
     
@@ -41,10 +41,11 @@ class XmlRead:
     def from_xml(self):
         pass
 
-#TODO: rename
-class XmlSomething(XmlRead):
+class FundamentalsReportFinancialStatements(XmlRead):
     """
-    One of the ways of extracting the data from xml file.
+    Extracting data from an xml file.
+    Further explanation on file format can be found on:
+    https://docs-2-0--quantrocket.netlify.app/data/reuters/
     
     **Attributes:**
 

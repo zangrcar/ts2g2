@@ -11,7 +11,7 @@ from tsg_io.input import CsvFile, TsFile
 from from_graph.strategy_to_time_sequence import StrategyNextValueInNodeRandom, StrategyNextValueInNodeRandomForSlidingWindow, StrategyNextValueInNodeRoundRobin, StrategyNextValueInNodeRoundRobinForSlidingWindow, StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs, StrategySelectNextNodeRandomlyFromNeighboursFromFirstGraph, StrategySelectNextNodeRandomly, StrategySelectNextNodeRandomDegree, StrategySelectNextNodeRandomWithRestart, StrategyNextValueInNodeOrdinalPartition
 from to_graph.strategy_linking_graph import StrategyLinkingGraphByValueWithinRange, LinkNodesWithinGraph
 from to_graph.strategy_linking_multi_graphs import LinkGraphs
-from to_graph.strategy_to_graph import BuildTimeseriesToGraphNaturalVisibilityStrategy, BuildTimeseriesToGraphHorizontalVisibilityStrategy, BuildTimeseriesToGraphOrdinalPartition, BuildTimeseriesToGraphQuantile
+from to_graph.strategy_to_graph import BuildTimeseriesToGraphNaturalVisibilityStrategy, BuildTimeseriesToGraphHorizontalVisibilityStrategy, BuildTimeseriesToGraphOrdinalPartition, BuildTimeseriesToGraphQuantile, BuildTimeseriesToGraphProximityNetwork
 from embeddings.ts2g2_embeddings import EmbeddingRanking, VisitorGraphEmbeddingModelDoc2Vec, VisitorTimeseriesEmbeddingModelTS2Vec
 import numpy as np
 import networkx as nx
@@ -26,8 +26,12 @@ adiac_path = os.path.join(os.getcwd(), "adiac", "Adiac_TEST.ts")
 dodger_loop_weekend_path = os.path.join(os.getcwd(), "dodger_loop_weekend", "DodgerLoopWeekend_TEST.ts")
 
 
+timegraph_proximity_network = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
+    .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
+    .to_graph(BuildTimeseriesToGraphProximityNetwork().get_strategy())\
+    .draw("grey")
 
-
+"""
 timegraph_1 = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
     .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
@@ -52,7 +56,7 @@ timegraph_ordinal_partition = Timeseries(TsFile(abnormalHeartbeat_path).from_ts(
     .add_edge(0,2)\
     .link(LinkNodesWithinGraph().seasonalities(4))\
     #.draw("purple")
-
+"""
 """
 timegraph_ordinal_partition.to_sequence(ToSequenceVisitorOrdinalPartition()\
     .next_node_strategy(StrategySelectNextNodeRandomWithRestart())\
@@ -61,7 +65,7 @@ timegraph_ordinal_partition.to_sequence(ToSequenceVisitorOrdinalPartition()\
     #.draw_sequence()
 """
 
-
+"""
 timegraph_quantile = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 120))\
     .to_graph(BuildTimeseriesToGraphQuantile(4, 1).get_strategy())\
@@ -129,14 +133,15 @@ timegraph_8 = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .link(LinkGraphs().sliding_window())\
     .combine_identical_subgraphs()\
 
-path = TsFile(abnormalHeartbeat_path).from_ts()
+path = TsFile(adiac_path).from_ts()
+
+embedding_size = 20
+
+model_graph = VisitorGraphEmbeddingModelDoc2Vec().train_model([timegraph_1, timegraph_2, timegraph_3, timegraph_4, timegraph_6, timegraph_7, timegraph_8, timegraph_ordinal_partition, timegraph_quantile], embedding_size)
+model_ts = VisitorTimeseriesEmbeddingModelTS2Vec().train_model(path, embedding_size, epoch=20)
 
 
-model_graph = VisitorGraphEmbeddingModelDoc2Vec().train_model([timegraph_1, timegraph_2, timegraph_3, timegraph_4, timegraph_6, timegraph_7, timegraph_8, timegraph_ordinal_partition, timegraph_quantile], 20)
-model_ts = VisitorTimeseriesEmbeddingModelTS2Vec().train_model(path, 20, epoch=20)
-
-
-
+"""
 
 
 #joblib.dump(model_graph, "embedding_models/graph_model_abnormal_heartbeat.joblib")
@@ -148,7 +153,7 @@ model_graph = joblib.load("embedding_models/graph_model.joblib")
 model_ts = joblib.load("embedding_models/timeseries_model.joblib")
 """
 
-
+"""
 
 
 data = {'run':[], 'natural_visibility':[], 'horizontal_visibility':[], 'ordinal_partition':[], 'quantile':[]}
@@ -157,7 +162,7 @@ i = 1
 while i <= 5:
     print(i)
 
-    x = EmbeddingRanking(20)\
+    x = EmbeddingRanking(embedding_size)\
         .set_embedding_models(model_ts, model_graph)\
         .set_to_graph_strategies([BuildTimeseriesToGraphNaturalVisibilityStrategy(), BuildTimeseriesToGraphHorizontalVisibilityStrategy(), BuildTimeseriesToGraphOrdinalPartition(10, 5), BuildTimeseriesToGraphQuantile(4, 1)])\
         .add_timeseries(Timeseries(path).with_preprocessing(TimeseriesPreprocessingSegmentation(100, 200)))\
@@ -186,7 +191,7 @@ df.to_csv('kendall_tau_results/apple_kendall_tau', index=False)
 
 
 
-
+"""
 
 
 """

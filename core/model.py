@@ -1,6 +1,6 @@
 from deprecated import deprecated
 from from_graph.strategy_to_time_sequence import StrategyNextValueInNode
-import to_graph.strategy_linking_graph as gs
+from to_graph.strategy_linking_graph import LinkNodesWithinGraph
 from from_graph.strategy_to_time_sequence import StrategySelectNextNode
 
 import matplotlib.pyplot as plt
@@ -8,12 +8,11 @@ import networkx as nx
 import hashlib
 import numpy as np
 
-import to_graph.strategy_linking_multi_graphs as mgl
+from to_graph.strategy_linking_multi_graphs import LinkGraphs
 import to_graph.strategy_to_graph
 from to_graph.strategy_to_graph import BuildStrategyForTimeseriesToGraph
 import copy
 import math
-from scipy.fft import fft
 
 
 class StrategyNotImplementedError(Exception):
@@ -192,7 +191,7 @@ class TimeseriesView:
             self.is_implemented = strategy._has_implemented_to_ts()
             return self
 
-    def link(self, link_strategy: mgl.LinkGraphs):
+    def link(self, link_strategy: LinkGraphs):
         return TimeGraph(link_strategy.link(self.graphs, self.graph_order), graphs = self.graphs, is_implemented=self.is_implemented, histogram_frequencies = self.histogram_frequencies, histogram_bins = self.histogram_bins, w = self.w, tau = self.tau)
 
     def _get_graphs(self):
@@ -229,6 +228,7 @@ class TimeGraph:
     - `graph`: object networkx.Graph
     
     """
+    
     def __init__(self, graph, graphs = None, is_implemented = True, histogram_frequencies = None, histogram_bins = None, w = 1, tau = 1):
         self.graph = graph
         self.orig_graph = None
@@ -260,7 +260,7 @@ class TimeGraph:
             self.graph.add_edge(list(self.graph.nodes)[node_1], list(self.graph.nodes)[node_2], weight = weight)
         return self
 
-    def link(self, link_strategy: gs.LinkNodesWithinGraph):
+    def link(self, link_strategy: LinkNodesWithinGraph):
         """Links nodes based on link_strategy. link_strategy is object of class Link."""
         self.graph = link_strategy.link(self)
         return self

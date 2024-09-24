@@ -4,7 +4,6 @@ nb_dir = os.path.split(os.getcwd())[0]
 if nb_dir not in sys.path:
     sys.path.append(nb_dir)
 
-#os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 from core.model import Timeseries, TimeseriesPreprocessing, TimeseriesPreprocessingSegmentation, TimeseriesPreprocessingSlidingWindow, TimeseriesPreprocessingComposite, TimeseriesView, TimeGraph, ToSequenceVisitorSlidingWindow, ToSequenceVisitor, ToSequenceVisitorOrdinalPartition
 from tsg_io.input import CsvFile, TsFile
@@ -13,10 +12,6 @@ from to_graph.strategy_linking_graph import StrategyLinkingGraphByValueWithinRan
 from to_graph.strategy_linking_multi_graphs import LinkGraphs
 from to_graph.strategy_to_graph import BuildTimeseriesToGraphNaturalVisibilityStrategy, BuildTimeseriesToGraphHorizontalVisibilityStrategy, BuildTimeseriesToGraphOrdinalPartition, BuildTimeseriesToGraphQuantile, BuildTimeseriesToGraphProximityNetwork
 from embeddings.ts2g2_embeddings import EmbeddingRanking, VisitorGraphEmbeddingModelDoc2Vec, VisitorTimeseriesEmbeddingModelTS2Vec
-import numpy as np
-import networkx as nx
-import joblib
-import pandas as pd
 
 amazon_path = os.path.join(os.getcwd(), "amazon", "AMZN.csv")
 apple_path = os.path.join(os.getcwd(), "apple", "APPLE.csv")
@@ -28,7 +23,11 @@ dodger_loop_weekend_path = os.path.join(os.getcwd(), "dodger_loop_weekend", "Dod
 
 timegraph_proximity_network = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
+    .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+         .with_preprocessing(TimeseriesPreprocessingSegmentation(120, 150)))\
     .to_graph(BuildTimeseriesToGraphProximityNetwork().get_strategy())\
+    .link(LinkGraphs().time_cooccurrence())\
+    .add_edge(3, 17)\
     .draw("grey")
 
 """
@@ -204,9 +203,9 @@ timegraph_1.to_sequence(ToSequenceVisitor()\
 
 
 timegraph_2.to_sequence(ToSequenceVisitorSlidingWindow()\
-    .next_node_strategy(StrategySelectNextNodeRandomWithRestart())\
-    .next_value_strategy(StrategyNextValueInNodeRandomForSlidingWindow().skip_every_x_steps(1))\
-    .ts_length(50))\
+        .next_node_strategy(StrategySelectNextNodeRandomWithRestart())\
+        .next_value_strategy(StrategyNextValueInNodeRandomForSlidingWindow().skip_every_x_steps(1))\
+        .ts_length(50))\
     .draw_sequence()
 
 

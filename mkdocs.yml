@@ -93,9 +93,9 @@ nav:
     - Overview: tutorial/tutorial-ts2g2-overview.ipynb
     - To graph strategies: 
       - Visibility strategy: tutorial/tutorial-ts2g-visibility-strategy.ipynb
-      - Ordinal partition strategy: tutorial/tutorial-ts2g-ordinal-partition-strategy.ipynb
-      - Quantile strategy: tutorial/tutorial-ts2g-quantile-strategy.ipynb
-      - Proximity networks strategy: tutorial/tutorial-ts2g-proximity-networks-strategy.ipynb
+      - Ordinal partition strategy: tutorial/tutorial-ts2g-ordinal-partition.ipynb
+      - Quantile strategy: tutorial/tutorial-ts2g-quantile.ipynb
+      - Proximity networks strategy: tutorial/tutorial-ts2g-proximity-networks.ipynb
       - Sliding window strategy: tutorial/tutorial-ts2g-sliding-window-strategy.ipynb
     - To time series strategies: tutorial/tutorial-g2ts-strategies.ipynb
     - Embeddings: tutorial/tutorial-ts2g2-embeddings.ipynb

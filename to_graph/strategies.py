@@ -134,6 +134,9 @@ class TimeseriesToOrdinalPatternGraph:
     
     def _get_w_tau(self):
         return self.w, self.tau
+    
+    def _get_bins(self):
+        return None
 
 
 
@@ -198,7 +201,6 @@ class TimeseriesToProximityNetworkGraph:
         # Draw the network with thicker lines based on the edge weights
         nx.draw(self.network, pos, with_labels=True, edge_color='black', width=normalized_weights)
 
-
     def _get_name(self):
         return "Proximity network graph."
     
@@ -210,6 +212,9 @@ class TimeseriesToProximityNetworkGraph:
     
     def _get_w_tau(self):
         return None, None
+    
+    def _get_bins(self):
+        return None
 
     class CycleNetwork:
         def __init__(self, time_series, segment_length, threshold):
@@ -364,6 +369,7 @@ class TimeseriesToQuantileGraph:
     def __init__(self, Q, phi = 1):
         self.Q = Q
         self.phi = phi
+        self.bins = []
 
     def discretize_to_quantiles(self, time_series):
         time_series = time_series.read()
@@ -387,6 +393,8 @@ class TimeseriesToQuantileGraph:
 
     def to_graph(self, time_series, phi=1):
         quantile_bins, quantile_indices = self.discretize_to_quantiles(time_series)
+        self.bins.append(quantile_bins) 
+
 
         G = nx.DiGraph()
 
@@ -416,10 +424,13 @@ class TimeseriesToQuantileGraph:
         return False
     
     def _has_implemented_to_ts(self):
-        return False
+        return True
     
     def _get_w_tau(self):
         return None, None
+    
+    def _get_bins(self):
+        return self.bins
 
 
 class TimeseriesToGraphStrategy:
@@ -506,6 +517,9 @@ class TimeseriesToGraphStrategy:
     
     def _get_w_tau(self):
         return None, None
+    
+    def _get_bins(self):
+        return None
 
 
 class TimeseriesEdgeVisibilityConstraints:

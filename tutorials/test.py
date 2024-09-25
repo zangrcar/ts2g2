@@ -5,9 +5,9 @@ if nb_dir not in sys.path:
     sys.path.append(nb_dir)
 
 
-from core.model import Timeseries, TimeseriesPreprocessing, TimeseriesPreprocessingSegmentation, TimeseriesPreprocessingSlidingWindow, TimeseriesPreprocessingComposite, TimeseriesView, TimeGraph, ToSequenceVisitorSlidingWindow, ToSequenceVisitor, ToSequenceVisitorOrdinalPartition
-from tsg_io.input import CsvFile, TsFile
-from from_graph.strategy_to_time_sequence import StrategyNextValueInNodeRandom, StrategyNextValueInNodeRandomForSlidingWindow, StrategyNextValueInNodeRoundRobin, StrategyNextValueInNodeRoundRobinForSlidingWindow, StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs, StrategySelectNextNodeRandomlyFromNeighboursFromFirstGraph, StrategySelectNextNodeRandomly, StrategySelectNextNodeRandomDegree, StrategySelectNextNodeRandomWithRestart, StrategyNextValueInNodeOrdinalPartition
+from core.model import Timeseries, TimeseriesPreprocessing, TimeseriesPreprocessingSegmentation, TimeseriesPreprocessingSlidingWindow, TimeseriesPreprocessingComposite, TimeseriesView, TimeGraph, ToSequenceVisitorSlidingWindow, ToSequenceVisitor, ToSequenceVisitorOrdinalPartition, ToSequenceVisitorQuantile
+from tsg_io.input import CsvFile, TsFile, FundamentalsReportFinancialStatements
+from from_graph.strategy_to_time_sequence import StrategyNextValueInNodeRandom, StrategyNextValueInNodeRandomForSlidingWindow, StrategyNextValueInNodeRoundRobin, StrategyNextValueInNodeRoundRobinForSlidingWindow, StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs, StrategySelectNextNodeRandomlyFromNeighboursFromFirstGraph, StrategySelectNextNodeRandomly, StrategySelectNextNodeRandomDegree, StrategySelectNextNodeRandomWithRestart, StrategyNextValueInNodeOrdinalPartition, StrategyNextValueInNodeQuantile
 from to_graph.strategy_linking_graph import StrategyLinkingGraphByValueWithinRange, LinkNodesWithinGraph
 from to_graph.strategy_linking_multi_graphs import LinkGraphs
 from to_graph.strategy_to_graph import BuildTimeseriesToGraphNaturalVisibilityStrategy, BuildTimeseriesToGraphHorizontalVisibilityStrategy, BuildTimeseriesToGraphOrdinalPartition, BuildTimeseriesToGraphQuantile, BuildTimeseriesToGraphProximityNetwork
@@ -19,9 +19,10 @@ abnormalHeartbeat_path = os.path.join(os.getcwd(), "abnormal_heartbeat", "Abnorm
 acsf1_path = os.path.join(os.getcwd(), "ACSF1", "ACSF1_TEST.ts")
 adiac_path = os.path.join(os.getcwd(), "adiac", "Adiac_TEST.ts")
 dodger_loop_weekend_path = os.path.join(os.getcwd(), "dodger_loop_weekend", "DodgerLoopWeekend_TEST.ts")
+xml_path = os.path.join(os.getcwd(), "../fundamential/00BAC", "ReportsFinStatements.xml")
 
 
-timegraph_proximity_network = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
+timegraph_proximity_network = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
     .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
          .with_preprocessing(TimeseriesPreprocessingSegmentation(120, 150)))\
@@ -30,14 +31,10 @@ timegraph_proximity_network = Timeseries(TsFile(abnormalHeartbeat_path).from_ts(
     .add_edge(3, 17)\
     .draw("grey")
 
-"""
-timegraph_1 = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
-    .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
+timegraph_1 = Timeseries(FundamentalsReportFinancialStatements(xml_path, "SREV", season="Interim").from_xml())\
+    .with_preprocessing(TimeseriesPreprocessing())\
     .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
-    .add_edge(0,2)\
-    .add_edge(13, 21, weight = 17)\
-    .link(LinkNodesWithinGraph().by_value(StrategyLinkingGraphByValueWithinRange(2)).seasonalities(15))\
-    #.draw("blue")
+    .draw("blue")
 
 timegraph_ordinal_partition = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 120))\
@@ -54,23 +51,31 @@ timegraph_ordinal_partition = Timeseries(TsFile(abnormalHeartbeat_path).from_ts(
     .link(LinkGraphs().time_cooccurrence())\
     .add_edge(0,2)\
     .link(LinkNodesWithinGraph().seasonalities(4))\
-    #.draw("purple")
-"""
-"""
+    .draw("purple")
+
 timegraph_ordinal_partition.to_sequence(ToSequenceVisitorOrdinalPartition()\
     .next_node_strategy(StrategySelectNextNodeRandomWithRestart())\
     .next_value_strategy(StrategyNextValueInNodeOrdinalPartition())\
     .ts_length(100))\
-    #.draw_sequence()
-"""
+    .draw_sequence()
 
-"""
+
+
 timegraph_quantile = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 120))\
+    .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+         .with_preprocessing(TimeseriesPreprocessingSegmentation(100, 160)))\
     .to_graph(BuildTimeseriesToGraphQuantile(4, 1).get_strategy())\
+    .link(LinkGraphs().time_cooccurrence())\
     .add_edge(0,2)\
     .link(LinkNodesWithinGraph().seasonalities(4))\
-    #.draw("grey")
+    .draw("grey")
+
+timegraph_quantile.to_sequence(ToSequenceVisitorQuantile()\
+    .next_node_strategy(StrategySelectNextNodeRandomDegree())\
+    .next_value_strategy(StrategyNextValueInNodeQuantile())\
+    .ts_length(100))\
+    .draw_sequence()
 
 
 timegraph_2 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
@@ -80,7 +85,7 @@ timegraph_2 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
     .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
     .link(LinkGraphs().sliding_window())\
     .combine_identical_subgraphs()\
-    #.draw("red")
+    .draw("red")
 
 
 timegraph_3 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
@@ -93,7 +98,7 @@ timegraph_3 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
     .link(LinkGraphs().time_cooccurrence())\
     .link(LinkNodesWithinGraph().by_value(StrategyLinkingGraphByValueWithinRange(0.5)))\
     .combine_identical_nodes()\
-    #.draw("brown")
+    .draw("brown")
 
 
 timegraph_4 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
@@ -112,7 +117,7 @@ timegraph_4 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
     .link(LinkGraphs().sliding_window().time_cooccurrence())\
     .combine_identical_subgraphs()\
     .link(LinkNodesWithinGraph().seasonalities(15))\
-    #.draw("green")
+    .draw("green")
 
 
 
@@ -132,6 +137,7 @@ timegraph_8 = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .link(LinkGraphs().sliding_window())\
     .combine_identical_subgraphs()\
 
+"""
 path = TsFile(adiac_path).from_ts()
 
 embedding_size = 20

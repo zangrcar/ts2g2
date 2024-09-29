@@ -172,12 +172,12 @@ class StrategyNextValueInNodeOrdinalPartition(StrategyNextValueInNode):
     def get_name(self):
         return "ordinal partition"
 
-class StrategyNextValueInNodeQuantile(StrategyNextValueInNode):
+class StrategyNextValueInNodeQuantileRandom(StrategyNextValueInNode):
     
     def __init__(self):
         super().__init__()
     
-    def append(self, sequence, node, bins):
+    def append(self, sequence, node, bins, values):
         quantile = node[1]["order"]
         next_value = np.random.uniform(bins[quantile], bins[quantile+1])
         sequence.append(next_value)
@@ -185,8 +185,21 @@ class StrategyNextValueInNodeQuantile(StrategyNextValueInNode):
 
 
     def get_name(self):
-        return "quantile"
+        return "quantile random"
+    
+class StrategyNextValueInNodeQuantile(StrategyNextValueInNode):
 
+    def __init__(self):
+        super().__init__()
+    
+    def append(self, sequence, node, bins, values):
+        quantile = node[1]["order"]
+        next_value = random.choice(values[quantile])
+        sequence.append(next_value)
+        return sequence
+
+    def get_name(self):
+        return "quantile"
 
 class StrategySelectNextNode:
     """

@@ -1,4 +1,4 @@
-from to_graph.strategies import EdgeWeightingStrategyNull, TimeseriesEdgeVisibilityConstraintsHorizontal, TimeseriesEdgeVisibilityConstraintsNatural, TimeseriesEdgeVisibilityConstraintsVisibilityAngle, TimeseriesToGraphStrategy, TimeseriesToOrdinalPatternGraph, TimeseriesToQuantileGraph, TimeseriesToProximityNetworkGraph
+from to_graph.strategies import EdgeWeightingStrategyNull, TimeseriesEdgeVisibilityConstraintsHorizontal, TimeseriesEdgeVisibilityConstraintsNatural, TimeseriesEdgeVisibilityConstraintsVisibilityAngle, TimeseriesToGraphStrategy, TimeseriesToOrdinalPatternGraph, TimeseriesToQuantileGraph, TimeseriesToProximityNetworkGraph, TimeseriesToCorrelationGraph
 
 #TODO: this is a builder!
 class BuildStrategyForTimeseriesToGraph:
@@ -90,3 +90,9 @@ class BuildTimeseriesToGraphProximityNetwork:
     def get_strategy(self):
         return TimeseriesToProximityNetworkGraph(method=self.method, segment_length=self.segment_length, threshold=self.treshold, k=self.k, epsilon=self.epsilon, recurrence_type=self.recurrence_type)
     
+class BuildTimeseriesToGraphPearsonCorrelation:
+    def __init__(self):
+        pass
+
+    def get_strategy(self):
+        return TimeseriesToCorrelationGraph()

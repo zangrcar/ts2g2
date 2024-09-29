@@ -7,10 +7,10 @@ if nb_dir not in sys.path:
 
 from core.model import Timeseries, TimeseriesPreprocessing, TimeseriesPreprocessingSegmentation, TimeseriesPreprocessingSlidingWindow, TimeseriesPreprocessingComposite, TimeseriesView, TimeGraph, ToSequenceVisitorSlidingWindow, ToSequenceVisitor, ToSequenceVisitorOrdinalPartition, ToSequenceVisitorQuantile
 from tsg_io.input import CsvFile, TsFile, FundamentalsReportFinancialStatements
-from from_graph.strategy_to_time_sequence import StrategyNextValueInNodeRandom, StrategyNextValueInNodeRandomForSlidingWindow, StrategyNextValueInNodeRoundRobin, StrategyNextValueInNodeRoundRobinForSlidingWindow, StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs, StrategySelectNextNodeRandomlyFromNeighboursFromFirstGraph, StrategySelectNextNodeRandomly, StrategySelectNextNodeRandomDegree, StrategySelectNextNodeRandomWithRestart, StrategyNextValueInNodeOrdinalPartition, StrategyNextValueInNodeQuantile
+from from_graph.strategy_to_time_sequence import StrategyNextValueInNodeRandom, StrategyNextValueInNodeRandomForSlidingWindow, StrategyNextValueInNodeRoundRobin, StrategyNextValueInNodeRoundRobinForSlidingWindow, StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs, StrategySelectNextNodeRandomlyFromNeighboursFromFirstGraph, StrategySelectNextNodeRandomly, StrategySelectNextNodeRandomDegree, StrategySelectNextNodeRandomWithRestart, StrategyNextValueInNodeOrdinalPartition, StrategyNextValueInNodeQuantileRandom, StrategyNextValueInNodeQuantile
 from to_graph.strategy_linking_graph import StrategyLinkingGraphByValueWithinRange, LinkNodesWithinGraph
-from to_graph.strategy_linking_multi_graphs import LinkGraphs
-from to_graph.strategy_to_graph import BuildTimeseriesToGraphNaturalVisibilityStrategy, BuildTimeseriesToGraphHorizontalVisibilityStrategy, BuildTimeseriesToGraphOrdinalPartition, BuildTimeseriesToGraphQuantile, BuildTimeseriesToGraphProximityNetwork
+from to_graph.strategy_linking_multi_graphs import LinkGraphs, PearsonCorrelation
+from to_graph.strategy_to_graph import BuildTimeseriesToGraphNaturalVisibilityStrategy, BuildTimeseriesToGraphHorizontalVisibilityStrategy, BuildTimeseriesToGraphOrdinalPartition, BuildTimeseriesToGraphQuantile, BuildTimeseriesToGraphProximityNetwork, BuildTimeseriesToGraphPearsonCorrelation
 from embeddings.ts2g2_embeddings import EmbeddingRanking, VisitorGraphEmbeddingModelDoc2Vec, VisitorTimeseriesEmbeddingModelTS2Vec
 
 amazon_path = os.path.join(os.getcwd(), "amazon", "AMZN.csv")
@@ -22,6 +22,90 @@ dodger_loop_weekend_path = os.path.join(os.getcwd(), "dodger_loop_weekend", "Dod
 xml_path = os.path.join(os.getcwd(), "../fundamential/00BAC", "ReportsFinStatements.xml")
 
 
+
+timegraph_pearson_correlation_sliding_windo = Timeseries(CsvFile(apple_path, "Close").from_csv())\
+    .with_preprocessing(TimeseriesPreprocessingComposite()\
+        .add(TimeseriesPreprocessingSegmentation(60, 70))\
+        .add(TimeseriesPreprocessingSlidingWindow(5)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingComposite()\
+            .add(TimeseriesPreprocessingSegmentation(120, 130))\
+            .add(TimeseriesPreprocessingSlidingWindow(5))))\
+    .to_graph(BuildTimeseriesToGraphPearsonCorrelation().get_strategy())\
+    .link(LinkGraphs().correlation_sliding_window(PearsonCorrelation()).time_cooccurrence())\
+    .draw()
+
+timegraph_pearson_correlation_sliding_window = Timeseries(CsvFile(apple_path, "Close").from_csv())\
+    .with_preprocessing(TimeseriesPreprocessingComposite()\
+        .add(TimeseriesPreprocessingSegmentation(60, 70))\
+        .add(TimeseriesPreprocessingSlidingWindow(5)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingComposite()\
+            .add(TimeseriesPreprocessingSegmentation(120, 130))\
+            .add(TimeseriesPreprocessingSlidingWindow(5))))\
+    .to_graph(BuildTimeseriesToGraphPearsonCorrelation().get_strategy())\
+    .link(LinkGraphs().correlation_sliding_window(PearsonCorrelation()).positional_correlation_sliding_window(PearsonCorrelation()))\
+    .draw()
+
+timegraph_dtw = Timeseries(CsvFile(apple_path, "Close").from_csv())\
+    .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(90, 130)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(130, 200)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(200, 250)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(250, 330)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(330, 360)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(360, 370)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(400, 430)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(500, 600)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(900, 930)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(900, 960)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(970, 1000)))\
+    .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
+    .link(LinkGraphs().dynamic_timewarping())\
+    .draw()
+
+
+
+
+timegraph_pearson_correlation = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+    .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
+    .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(120, 150)))\
+    .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(180, 210)))\
+    .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(240, 270)))\
+    .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingSegmentation(300, 330)))\
+    .to_graph(BuildTimeseriesToGraphPearsonCorrelation().get_strategy())\
+    .link(LinkGraphs().correlation(PearsonCorrelation()))\
+    .draw()
+
+timegraph_pearson_correlation_sliding_window = Timeseries(CsvFile(apple_path, "Close").from_csv())\
+    .with_preprocessing(TimeseriesPreprocessingComposite()\
+        .add(TimeseriesPreprocessingSegmentation(60, 70))\
+        .add(TimeseriesPreprocessingSlidingWindow(5)))\
+    .add(Timeseries(CsvFile(apple_path, "Close").from_csv())\
+        .with_preprocessing(TimeseriesPreprocessingComposite()\
+            .add(TimeseriesPreprocessingSegmentation(120, 130))\
+            .add(TimeseriesPreprocessingSlidingWindow(5))))\
+    .to_graph(BuildTimeseriesToGraphPearsonCorrelation().get_strategy())\
+    .link(LinkGraphs().correlation_sliding_window(PearsonCorrelation()).time_cooccurrence())\
+    .draw()
+
+
+
 timegraph_proximity_network = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 90))\
     .add(Timeseries(CsvFile(amazon_path, "Close").from_csv())\
@@ -29,12 +113,9 @@ timegraph_proximity_network = Timeseries(CsvFile(amazon_path, "Close").from_csv(
     .to_graph(BuildTimeseriesToGraphProximityNetwork().get_strategy())\
     .link(LinkGraphs().time_cooccurrence())\
     .add_edge(3, 17)\
-    .draw("grey")
+    .draw()
 
-timegraph_1 = Timeseries(FundamentalsReportFinancialStatements(xml_path, "SREV", season="Interim").from_xml())\
-    .with_preprocessing(TimeseriesPreprocessing())\
-    .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
-    .draw("blue")
+
 
 timegraph_ordinal_partition = Timeseries(TsFile(abnormalHeartbeat_path).from_ts())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(60, 120))\
@@ -51,7 +132,7 @@ timegraph_ordinal_partition = Timeseries(TsFile(abnormalHeartbeat_path).from_ts(
     .link(LinkGraphs().time_cooccurrence())\
     .add_edge(0,2)\
     .link(LinkNodesWithinGraph().seasonalities(4))\
-    .draw("purple")
+    .draw()
 
 timegraph_ordinal_partition.to_sequence(ToSequenceVisitorOrdinalPartition()\
     .next_node_strategy(StrategySelectNextNodeRandomWithRestart())\
@@ -69,11 +150,11 @@ timegraph_quantile = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .link(LinkGraphs().time_cooccurrence())\
     .add_edge(0,2)\
     .link(LinkNodesWithinGraph().seasonalities(4))\
-    .draw("grey")
+    .draw()
 
 timegraph_quantile.to_sequence(ToSequenceVisitorQuantile()\
     .next_node_strategy(StrategySelectNextNodeRandomDegree())\
-    .next_value_strategy(StrategyNextValueInNodeQuantile())\
+    .next_value_strategy(StrategyNextValueInNodeQuantileRandom())\
     .ts_length(100))\
     .draw_sequence()
 
@@ -85,7 +166,7 @@ timegraph_2 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
     .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().get_strategy())\
     .link(LinkGraphs().sliding_window())\
     .combine_identical_subgraphs()\
-    .draw("red")
+    .draw()
 
 
 timegraph_3 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
@@ -98,7 +179,7 @@ timegraph_3 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
     .link(LinkGraphs().time_cooccurrence())\
     .link(LinkNodesWithinGraph().by_value(StrategyLinkingGraphByValueWithinRange(0.5)))\
     .combine_identical_nodes()\
-    .draw("brown")
+    .draw()
 
 
 timegraph_4 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
@@ -117,11 +198,11 @@ timegraph_4 = Timeseries(CsvFile(apple_path, "Close").from_csv())\
     .link(LinkGraphs().sliding_window().time_cooccurrence())\
     .combine_identical_subgraphs()\
     .link(LinkNodesWithinGraph().seasonalities(15))\
-    .draw("green")
+    .draw()
 
 
 
-timegraph_6 = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
+timegraph_1 = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .with_preprocessing(TimeseriesPreprocessingSegmentation(4000, 4500))\
     .to_graph(BuildTimeseriesToGraphNaturalVisibilityStrategy().with_limit(1).get_strategy())\
 
@@ -136,6 +217,8 @@ timegraph_8 = Timeseries(CsvFile(amazon_path, "Close").from_csv())\
     .to_graph(BuildTimeseriesToGraphHorizontalVisibilityStrategy().with_limit(1).get_strategy())\
     .link(LinkGraphs().sliding_window())\
     .combine_identical_subgraphs()\
+
+
 
 """
 path = TsFile(adiac_path).from_ts()
@@ -198,9 +281,6 @@ df.to_csv('kendall_tau_results/apple_kendall_tau', index=False)
 
 """
 
-
-"""
-
 timegraph_1.to_sequence(ToSequenceVisitor()\
         .next_node_strategy(StrategySelectNextNodeRandomWithRestart())\
         .next_value_strategy(StrategyNextValueInNodeRoundRobin().skip_every_x_steps(1))\
@@ -229,9 +309,15 @@ timegraph_4.to_sequence(ToSequenceVisitorSlidingWindow()\
     .draw_sequence()
 
 
-"""
-"""
+timegraph_dtw.to_sequence(ToSequenceVisitor()\
+    .next_node_strategy(StrategySelectNextNodeRandomlyFromNeighboursAcrossGraphs())\
+    .next_value_strategy(StrategyNextValueInNodeRandom())\
+    .ts_length(100))\
+    .draw_sequence()
 
+
+
+"""
 import os
 import sys
 nb_dir = os.path.split(os.getcwd())[0]

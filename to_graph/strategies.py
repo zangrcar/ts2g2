@@ -6,6 +6,7 @@ import itertools
 import math
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
+import hashlib
 
 
 
@@ -92,7 +93,6 @@ class TimeseriesToOrdinalPatternGraph:
         combined_pattern = tuple([p[i] for p in patterns for i in range(len(p))])
         return combined_pattern
 
-
     def to_graph(self, timeseries_stream):
         timeseries = timeseries_stream.read()
         if isinstance(timeseries, list) and isinstance(timeseries[0], np.ndarray):
@@ -120,6 +120,8 @@ class TimeseriesToOrdinalPatternGraph:
 
         for (start, end), weight in transitions.items():
             G.add_edge(start, end, weight=weight / len(ordinal_patterns))
+        
+        nx.set_edge_attributes(G, "#ffff00", "color")
 
         return TimeseriesGraph(G)
     
@@ -136,8 +138,38 @@ class TimeseriesToOrdinalPatternGraph:
         return self.w, self.tau
     
     def _get_bins(self):
-        return None
+        return None, None
 
+class TimeseriesToCorrelationGraph:
+    def __init__(self):
+        pass
+    
+    def to_graph(self, timeseries):
+        timeseries = timeseries.read()
+
+        G = nx.Graph()
+        G.add_node(self._hash(timeseries), timeseries = timeseries)
+
+        return TimeseriesGraph(G)
+    
+    def _hash(self, timeseries):
+        str_to_hash = ','.join(map(str, timeseries))
+        return hashlib.md5(str_to_hash.encode()).hexdigest()
+
+    def _get_name(self):
+        return "Pearson correlation graph"
+    
+    def _has_value(self):
+        return False
+    
+    def _has_implemented_to_ts(self):
+        return False
+    
+    def _get_w_tau(self):
+        return None, None
+    
+    def _get_bins(self):
+        return None, None
 
 
 class TimeseriesToProximityNetworkGraph:
@@ -178,7 +210,7 @@ class TimeseriesToProximityNetworkGraph:
             self.network = self.RecurrenceNetwork(self.time_series, self.k, self.epsilon).create(self.recurrence_type)
         else:
             raise ValueError("Invalid method selected. Choose 'cycle', 'correlation', or 'recurrence'.")
-
+        nx.set_edge_attributes(self.network, "#660066", "color")
         return TimeseriesGraph(self.network)
         #self._draw_network()  # Draw the network
 
@@ -214,7 +246,7 @@ class TimeseriesToProximityNetworkGraph:
         return None, None
     
     def _get_bins(self):
-        return None
+        return None, None
 
     class CycleNetwork:
         def __init__(self, time_series, segment_length, threshold):
@@ -370,6 +402,7 @@ class TimeseriesToQuantileGraph:
         self.Q = Q
         self.phi = phi
         self.bins = []
+        self.values = []
 
     def discretize_to_quantiles(self, time_series):
         time_series = time_series.read()
@@ -390,11 +423,21 @@ class TimeseriesToQuantileGraph:
             mean_jump = np.mean(jumps)
             mean_jumps.append(mean_jump)
         return np.array(mean_jumps)
+    
+    def get_quantile_values(self, timeseries, bins, indices):
+        timeseries = timeseries.read()
+        values = [[] for i in range(len(bins)-1)]
+        
+        for i in range(len(indices)):
+            values[indices[i]].append(timeseries.iloc[i])
+        
+        self.values.append(values)
+        return
 
     def to_graph(self, time_series, phi=1):
         quantile_bins, quantile_indices = self.discretize_to_quantiles(time_series)
         self.bins.append(quantile_bins) 
-
+        self.get_quantile_values(time_series, quantile_bins, quantile_indices)
 
         G = nx.DiGraph()
 
@@ -414,7 +457,7 @@ class TimeseriesToQuantileGraph:
             if total_weight > 0:
                 for j in G.successors(i):
                     G[i][j]['weight'] /= total_weight
-
+        nx.set_edge_attributes(G, "#b266ff", "color")
         return TimeseriesGraph(G)
     
     def _get_name(self):
@@ -430,7 +473,7 @@ class TimeseriesToQuantileGraph:
         return None, None
     
     def _get_bins(self):
-        return self.bins
+        return self.bins, self.values
 
 
 class TimeseriesToGraphStrategy:
@@ -495,7 +538,7 @@ class TimeseriesToGraphStrategy:
                     G.add_edge(x1, x2, weight=weight)
                 else:
                     G.add_edge(x1, x2)
-
+        nx.set_edge_attributes(G, "#ff8000", "color")
         return TimeseriesGraph(G)
     def initialize_graph(self, graph_type):
         if (graph_type == "undirected"):
@@ -519,7 +562,7 @@ class TimeseriesToGraphStrategy:
         return None, None
     
     def _get_bins(self):
-        return None
+        return None, None
 
 
 class TimeseriesEdgeVisibilityConstraints:

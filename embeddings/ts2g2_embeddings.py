@@ -12,9 +12,16 @@ class VisitorTimeseriesEmbeddingModel:
     def predict(self, timeseries):
         pass
 
-class VisitorGraphEmbeddingModel:
+
+class TrainModel:
     def __init__(self):
         self.model = None
+    
+    def get_model(self):
+        pass
+class VisitorGraphEmbeddingModel:
+    def __init__(self, model):
+        self.model = model
     
     def predict(self, graph):
         pass
@@ -111,7 +118,14 @@ from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 # https://medium.com/@klintcho/doc2vec-tutorial-using-gensim-ab3ac03d3a1
 
 
-class VisitorGraphEmbeddingModelDoc2Vec(VisitorGraphEmbeddingModel):
+
+from embeddings.ts2vec.ts2vec import TS2Vec
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import torch
+
+
+class TrainGraphEmbeddingModel(TrainModel):
     def __init__(self):
         self.model = None
     
@@ -122,7 +136,7 @@ class VisitorGraphEmbeddingModelDoc2Vec(VisitorGraphEmbeddingModel):
 
         str_walks = [[str(n) for n in walk] for walk in walks]
         return str_walks
-
+    
     def train_model(self, graphs, embedding_size):
         documents = []
         for idx in range(len(graphs)):
@@ -141,24 +155,14 @@ class VisitorGraphEmbeddingModelDoc2Vec(VisitorGraphEmbeddingModel):
         self.model = model
         return self
     
-    def predict(self, graph):
-        doc = self.get_random_walks_for_graph(graph._get_graph())
-        documents_gensim = []
-        for i, doc_walks in enumerate(doc):
-            documents_gensim = documents_gensim + [''.join(TaggedDocument(doc_walks, [i]).words)]
-        return self.model.infer_vector(documents_gensim)
+    def get_model(self):
+        return self.model
 
+class TrainTimeseriesEmbeddingModel(TrainModel):
 
-from embeddings.ts2vec.ts2vec import TS2Vec
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-import torch
-
-class VisitorTimeseriesEmbeddingModelTS2Vec(VisitorTimeseriesEmbeddingModel):
     def __init__(self):
         self.model = None
-
-
+    
     def train_model(self, timeseries, embedding_size, epoch = None):
         train_data, test_data= train_test_split(timeseries, random_state=42)
 
@@ -175,6 +179,32 @@ class VisitorTimeseriesEmbeddingModelTS2Vec(VisitorTimeseriesEmbeddingModel):
         self.model.fit(train_data, n_epochs = epoch, verbose=True)
         train_embeddings = self.model.encode(train_data)
         return self
+
+    def get_model(self):
+        return self.model
+
+class VisitorGraphEmbeddingModelDoc2Vec(VisitorGraphEmbeddingModel):
+    def __init__(self, model):
+        self.model = model
+    
+    def get_random_walks_for_graph(self, df_graph):
+        df = pd.DataFrame(df_graph.edges(data=True), columns = ['source', 'target', 'attributes'])
+        G = nx.from_pandas_edgelist(df, 'source', 'target')
+        walks = nx.generate_random_paths(G, sample_size=15, path_length=45)
+
+        str_walks = [[str(n) for n in walk] for walk in walks]
+        return str_walks
+    
+    def predict(self, graph):
+        doc = self.get_random_walks_for_graph(graph._get_graph())
+        documents_gensim = []
+        for i, doc_walks in enumerate(doc):
+            documents_gensim = documents_gensim + [''.join(TaggedDocument(doc_walks, [i]).words)]
+        return self.model.infer_vector(documents_gensim)
+
+class VisitorTimeseriesEmbeddingModelTS2Vec(VisitorTimeseriesEmbeddingModel):
+    def __init__(self, model):
+        self.model = model
     
     def predict(self, timeseries):
         while(isinstance(timeseries, list)):
@@ -188,7 +218,6 @@ class VisitorTimeseriesEmbeddingModelTS2Vec(VisitorTimeseriesEmbeddingModel):
             timeseries = timeseries.reshape(1, timeseries.shape[0], timeseries.shape[1])
         x = self.model.encode(timeseries, encoding_window='full_series')
         return x[0]
-
 
 
 
